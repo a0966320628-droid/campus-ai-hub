@@ -1,0 +1,1485 @@
+{% extends "base.html" %}
+{% block title %}好友管理｜Campus AI Hub{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .friends-page {
+        min-height: 100vh;
+        background:
+            radial-gradient(
+                circle at top left,
+                rgba(37, 99, 235, 0.15),
+                transparent 35%
+            ),
+            linear-gradient(
+                135deg,
+                #020617,
+                #0f172a 55%,
+                #111827
+            );
+        color: #e2e8f0;
+        padding-bottom: 50px;
+    }
+
+    .friends-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: rgba(15, 23, 42, 0.96);
+        border-bottom: 1px solid #334155;
+        backdrop-filter: blur(12px);
+    }
+
+    .friends-topbar-inner {
+        width: min(1280px, 94%);
+        margin: 0 auto;
+        padding: 15px 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .page-title h1 {
+        margin: 0;
+        color: #f8fafc;
+        font-size: 24px;
+    }
+
+    .page-title p {
+        margin: 5px 0 0;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .top-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        border: none;
+        border-radius: 10px;
+        padding: 9px 13px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+
+        transition: 0.2s;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #15803d;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #b91c1c;
+    }
+
+    .btn-secondary {
+        background: #334155;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #475569;
+    }
+
+    .friends-container {
+        width: min(1280px, 94%);
+        margin: 0 auto;
+        padding-top: 22px;
+    }
+
+    .message-box {
+        display: none;
+        margin-bottom: 16px;
+        padding: 13px 15px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .message-success {
+        display: block;
+        background: rgba(22, 163, 74, 0.15);
+        border: 1px solid #22c55e;
+        color: #bbf7d0;
+    }
+
+    .message-error {
+        display: block;
+        background: rgba(220, 38, 38, 0.15);
+        border: 1px solid #ef4444;
+        color: #fecaca;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 17px;
+    }
+
+    .stat-label {
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .stat-number {
+        margin-top: 9px;
+        color: white;
+        font-size: 29px;
+        font-weight: bold;
+    }
+
+    .panel {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid #334155;
+        border-radius: 18px;
+        padding: 19px;
+        margin-bottom: 18px;
+
+        box-shadow:
+            0 15px 40px
+            rgba(0, 0, 0, 0.18);
+    }
+
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .panel-header h2 {
+        margin: 0;
+        color: #f8fafc;
+        font-size: 20px;
+    }
+
+    .panel-description {
+        color: #94a3b8;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .search-area {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .search-input {
+        width: 100%;
+        border: 1px solid #475569;
+        background: #0f172a;
+        color: #f8fafc;
+        outline: none;
+
+        border-radius: 10px;
+        padding: 11px 12px;
+        font-size: 14px;
+    }
+
+    .search-input:focus {
+        border-color: #3b82f6;
+
+        box-shadow:
+            0 0 0 3px
+            rgba(59, 130, 246, 0.12);
+    }
+
+    .people-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(
+                auto-fill,
+                minmax(280px, 1fr)
+            );
+        gap: 13px;
+    }
+
+    .person-card {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 15px;
+        padding: 15px;
+
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+
+        transition: 0.2s;
+    }
+
+    .person-card:hover {
+        border-color: #3b82f6;
+        transform: translateY(-2px);
+    }
+
+    .avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+
+        background: #334155;
+        border: 2px solid #3b82f6;
+    }
+
+    .avatar-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .person-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .person-name {
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .person-meta {
+        color: #94a3b8;
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .person-actions {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        margin-top: 6px;
+    }
+
+    .badge-friend {
+        background: #14532d;
+        color: #bbf7d0;
+    }
+
+    .badge-request {
+        background: #78350f;
+        color: #fde68a;
+    }
+
+    .empty-state {
+        padding: 35px 15px;
+        text-align: center;
+        color: #94a3b8;
+
+        border:
+            1px dashed
+            #475569;
+
+        border-radius: 13px;
+    }
+
+    .section-count {
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 999px;
+        background: #1e3a8a;
+        color: #bfdbfe;
+
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    @media (max-width: 850px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .search-area {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .top-actions {
+            width: 100%;
+        }
+
+        .top-actions .btn {
+            flex: 1;
+        }
+
+        .people-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .person-card {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="friends-page">
+
+    <header class="friends-topbar">
+
+        <div class="friends-topbar-inner">
+
+            <div class="page-title">
+
+                <h1>
+                    👥 好友管理
+                </h1>
+
+                <p>
+                    使用姓名、帳號或學號搜尋校園使用者，
+                    管理好友邀請與好友列表。
+                </p>
+
+            </div>
+
+            <div class="top-actions">
+
+                <a
+                    href="/dashboard"
+                    class="btn btn-secondary"
+                >
+                    🏠 返回首頁
+                </a>
+
+                <a
+                    href="/chat"
+                    class="btn btn-primary"
+                >
+                    💬 好友聊天室
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <div class="friends-container">
+
+        <div
+            id="messageBox"
+            class="message-box"
+        ></div>
+
+
+        <!-- 統計 -->
+        <section class="dashboard-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    我的好友
+                </div>
+
+                <div
+                    id="friendCount"
+                    class="stat-number"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    待處理邀請
+                </div>
+
+                <div
+                    id="requestCount"
+                    class="stat-number"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-label">
+                    搜尋結果
+                </div>
+
+                <div
+                    id="searchCount"
+                    class="stat-number"
+                >
+                    0
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- 搜尋 -->
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+                        🔎 搜尋使用者
+                    </h2>
+
+                    <div class="panel-description">
+                        可輸入姓名、帳號或學號，例如：
+                        王小明、ming、S11223344
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="search-area">
+
+                <input
+                    id="searchInput"
+                    class="search-input"
+                    type="text"
+                    placeholder="輸入姓名、帳號或學號..."
+                >
+
+                <button
+                    class="btn btn-primary"
+                    type="button"
+                    onclick="searchUsers()"
+                >
+                    搜尋
+                </button>
+
+            </div>
+
+
+            <div
+                id="searchResults"
+                class="people-grid"
+            >
+
+                <div class="empty-state">
+                    輸入關鍵字開始搜尋使用者。
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- 好友邀請 -->
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+                        📩 好友邀請
+                    </h2>
+
+                    <div class="panel-description">
+                        其他使用者傳送給你的好友邀請。
+                    </div>
+
+                </div>
+
+                <span
+                    id="requestBadge"
+                    class="section-count"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div
+                id="requestList"
+                class="people-grid"
+            >
+
+                <div class="empty-state">
+                    正在載入好友邀請...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- 我的好友 -->
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <h2>
+                        ❤️ 我的好友
+                    </h2>
+
+                    <div class="panel-description">
+                        可直接進入聊天室，
+                        或移除好友。
+                    </div>
+
+                </div>
+
+                <span
+                    id="friendBadge"
+                    class="section-count"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div
+                id="friendList"
+                class="people-grid"
+            >
+
+                <div class="empty-state">
+                    正在載入好友...
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+</div>
+
+
+<script>
+    let friends = [];
+    let requests = [];
+    let searchResults = [];
+
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    const searchResultsBox =
+        document.getElementById(
+            "searchResults"
+        );
+
+    const requestList =
+        document.getElementById(
+            "requestList"
+        );
+
+    const friendList =
+        document.getElementById(
+            "friendList"
+        );
+
+
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replaceAll(
+                "&",
+                "&amp;"
+            )
+            .replaceAll(
+                "<",
+                "&lt;"
+            )
+            .replaceAll(
+                ">",
+                "&gt;"
+            )
+            .replaceAll(
+                '"',
+                "&quot;"
+            )
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+    }
+
+
+    function showMessage(
+        message,
+        success = true
+    ) {
+
+        const box =
+            document.getElementById(
+                "messageBox"
+            );
+
+        box.textContent =
+            message;
+
+        box.className =
+            success
+                ? "message-box message-success"
+                : "message-box message-error";
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+        setTimeout(() => {
+
+            box.className =
+                "message-box";
+
+        }, 4000);
+    }
+
+
+    function avatarHTML(user) {
+
+        if (user.avatar_url) {
+
+            return `
+                <img
+                    class="avatar"
+                    src="${
+                        escapeHTML(
+                            user.avatar_url
+                        )
+                    }"
+                    alt="頭像"
+                >
+            `;
+        }
+
+        const firstCharacter =
+            String(
+                user.full_name ||
+                user.username ||
+                "U"
+            ).charAt(0);
+
+        return `
+            <div
+                class="
+                    avatar
+                    avatar-placeholder
+                "
+            >
+                ${escapeHTML(
+                    firstCharacter
+                )}
+            </div>
+        `;
+    }
+
+
+    function userInfoHTML(user) {
+
+        return `
+            <div class="person-name">
+                ${escapeHTML(
+                    user.full_name ||
+                    "未設定姓名"
+                )}
+            </div>
+
+            <div class="person-meta">
+
+                帳號：
+                ${
+                    escapeHTML(
+                        user.username ||
+                        "-"
+                    )
+                }
+                <br>
+
+                學號：
+                ${
+                    escapeHTML(
+                        user.student_no ||
+                        "-"
+                    )
+                }
+                <br>
+
+                科系：
+                ${
+                    escapeHTML(
+                        user.department ||
+                        "未設定"
+                    )
+                }
+
+            </div>
+        `;
+    }
+
+
+    async function searchUsers() {
+
+        const keyword =
+            searchInput
+                .value
+                .trim();
+
+        if (!keyword) {
+
+            searchResults = [];
+
+            renderSearchResults();
+
+            showMessage(
+                "請輸入姓名、帳號或學號",
+                false
+            );
+
+            return;
+        }
+
+        searchResultsBox.innerHTML = `
+            <div class="empty-state">
+                搜尋中...
+            </div>
+        `;
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/friends/search?q=${
+                        encodeURIComponent(
+                            keyword
+                        )
+                    }`
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "搜尋失敗"
+                );
+            }
+
+            searchResults =
+                result.data || [];
+
+            renderSearchResults();
+
+        } catch (error) {
+
+            searchResultsBox.innerHTML = `
+                <div class="empty-state">
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </div>
+            `;
+        }
+    }
+
+
+    function renderSearchResults() {
+
+        document
+            .getElementById(
+                "searchCount"
+            )
+            .textContent =
+                searchResults.length;
+
+        searchResultsBox.innerHTML =
+            "";
+
+        if (!searchResults.length) {
+
+            searchResultsBox.innerHTML = `
+                <div class="empty-state">
+                    找不到符合條件的使用者。
+                </div>
+            `;
+
+            return;
+        }
+
+        searchResults.forEach(
+            user => {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+                card.className =
+                    "person-card";
+
+                card.innerHTML = `
+                    ${avatarHTML(user)}
+
+                    <div class="person-info">
+
+                        ${userInfoHTML(user)}
+
+                        <div class="person-actions">
+
+                            <a
+                                href="/users/${user.id}"
+                                class="btn btn-secondary"
+                            >
+                                👤 查看資料
+                            </a>
+
+                            <button
+                                type="button"
+                                class="btn btn-primary"
+                                onclick="sendFriendRequest(
+                                    ${user.id}
+                                )"
+                            >
+                                ＋ 加入好友
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+
+                searchResultsBox
+                    .appendChild(card);
+            }
+        );
+    }
+
+
+    async function loadRequests() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/friends/requests"
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "載入邀請失敗"
+                );
+            }
+
+            requests =
+                result.data || [];
+
+            renderRequests();
+
+        } catch (error) {
+
+            requestList.innerHTML = `
+                <div class="empty-state">
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </div>
+            `;
+        }
+    }
+
+
+    function renderRequests() {
+
+        document
+            .getElementById(
+                "requestCount"
+            )
+            .textContent =
+                requests.length;
+
+        document
+            .getElementById(
+                "requestBadge"
+            )
+            .textContent =
+                requests.length;
+
+        requestList.innerHTML =
+            "";
+
+        if (!requests.length) {
+
+            requestList.innerHTML = `
+                <div class="empty-state">
+                    目前沒有待處理好友邀請。
+                </div>
+            `;
+
+            return;
+        }
+
+        requests.forEach(
+            user => {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+                card.className =
+                    "person-card";
+
+                card.innerHTML = `
+                    ${avatarHTML(user)}
+
+                    <div class="person-info">
+
+                        ${userInfoHTML(user)}
+
+                        <span
+                            class="
+                                badge
+                                badge-request
+                            "
+                        >
+                            等待你的回覆
+                        </span>
+
+                        <div class="person-actions">
+
+                            <a
+                                href="/users/${user.id}"
+                                class="btn btn-secondary"
+                            >
+                                👤 查看資料
+                            </a>
+                        
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-success
+                                "
+                                onclick="
+                                    acceptRequest(
+                                        ${user.request_id}
+                                    )
+                                "
+                            >
+                                ✓ 接受
+                            </button>
+
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-danger
+                                "
+                                onclick="
+                                    rejectRequest(
+                                        ${user.request_id}
+                                    )
+                                "
+                            >
+                                ✕ 拒絕
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+
+                requestList
+                    .appendChild(card);
+            }
+        );
+    }
+
+
+    async function loadFriends() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/friends"
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "載入好友失敗"
+                );
+            }
+
+            friends =
+                result.data || [];
+
+            renderFriends();
+
+        } catch (error) {
+
+            friendList.innerHTML = `
+                <div class="empty-state">
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </div>
+            `;
+        }
+    }
+
+
+    function renderFriends() {
+
+        document
+            .getElementById(
+                "friendCount"
+            )
+            .textContent =
+                friends.length;
+
+        document
+            .getElementById(
+                "friendBadge"
+            )
+            .textContent =
+                friends.length;
+
+        friendList.innerHTML =
+            "";
+
+        if (!friends.length) {
+
+            friendList.innerHTML = `
+                <div class="empty-state">
+                    目前還沒有好友。<br><br>
+                    可以在上方搜尋使用者並發送好友邀請。
+                </div>
+            `;
+
+            return;
+        }
+
+        friends.forEach(
+            user => {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+                card.className =
+                    "person-card";
+
+                card.innerHTML = `
+                    ${avatarHTML(user)}
+
+                    <div class="person-info">
+
+                        ${userInfoHTML(user)}
+
+                        <span
+                            class="
+                                badge
+                                badge-friend
+                            "
+                        >
+                            已是好友
+                        </span>
+
+                        <div class="person-actions">
+
+                            <a
+                                href="/users/${user.id}"
+                                class="btn btn-secondary"
+                            >
+                                👤 查看資料
+                            </a>
+                        
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-primary
+                                "
+                                onclick="
+                                    startChat(
+                                        ${user.id}
+                                    )
+                                "
+                            >
+                                💬 開始聊天
+                            </button>
+
+                            <button
+                                type="button"
+                                class="
+                                    btn
+                                    btn-danger
+                                "
+                                onclick="
+                                    removeFriend(
+                                        ${user.id}
+                                    )
+                                "
+                            >
+                                刪除好友
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+
+                friendList
+                    .appendChild(card);
+            }
+        );
+    }
+
+
+    async function sendFriendRequest(
+        userId
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/friends/request/${userId}`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "好友邀請發送失敗"
+                );
+            }
+
+            showMessage(
+                result.message ||
+                "好友邀請已送出"
+            );
+
+            await loadFriends();
+            await loadRequests();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                false
+            );
+        }
+    }
+
+
+    async function acceptRequest(
+        requestId
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/friends/requests/${requestId}/accept`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "接受邀請失敗"
+                );
+            }
+
+            showMessage(
+                result.message ||
+                "已成為好友"
+            );
+
+            await loadRequests();
+            await loadFriends();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                false
+            );
+        }
+    }
+
+
+    async function rejectRequest(
+        requestId
+    ) {
+
+        const confirmed =
+            confirm(
+                "確定要拒絕這個好友邀請嗎？"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/friends/requests/${requestId}/reject`,
+                    {
+                        method: "POST"
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "拒絕邀請失敗"
+                );
+            }
+
+            showMessage(
+                result.message ||
+                "已拒絕好友邀請"
+            );
+
+            await loadRequests();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                false
+            );
+        }
+    }
+
+
+    async function removeFriend(
+        userId
+    ) {
+
+        const friend =
+            friends.find(
+                item =>
+                    Number(item.id) ===
+                    Number(userId)
+            );
+
+        const friendName =
+            friend
+                ? friend.full_name
+                : "此好友";
+
+        const confirmed =
+            confirm(
+                `確定要刪除「${friendName}」好友嗎？`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/friends/${userId}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "刪除好友失敗"
+                );
+            }
+
+            showMessage(
+                result.message ||
+                "好友已刪除"
+            );
+
+            await loadFriends();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                false
+            );
+        }
+    }
+
+
+    function startChat(userId) {
+
+        location.href =
+            `/chat?friend_id=${userId}`;
+    }
+
+
+    searchInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter"
+            ) {
+
+                searchUsers();
+            }
+        }
+    );
+
+
+    async function initializePage() {
+
+        await Promise.all([
+            loadFriends(),
+            loadRequests()
+        ]);
+    }
+
+
+    initializePage();
+</script>
+
+{% endblock %}

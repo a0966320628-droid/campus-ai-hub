@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}AI 智慧助手｜Campus AI Hub{% endblock %}
+{% block content %}
+<style>
+/* Campus AI Hub V2 · high contrast dark chat · scoped styles */
+.ai3{--ai-bg:#101c33;--ai-surface:#1d2c46;--ai-surface-2:#2b3d58;--ai-border:#48617f;--ai-text:#f8fafc;--ai-muted:#c5d5e9;--ai-accent:#2563eb;max-width:1020px;margin:22px auto;padding:26px 22px;background:var(--ai-bg);border-radius:24px;color:var(--ai-text);box-shadow:0 18px 45px #050d2080;font-family:inherit}
+.ai3 *{box-sizing:border-box}
+.ai3 .back-link{display:inline-flex;align-items:center;color:#a8d9ff;font-weight:600;text-decoration:none;margin-bottom:14px}
+.ai3 .back-link:hover{color:#fff;text-decoration:underline}
+.ai3 h1{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;color:#fff;margin:0 0 8px;letter-spacing:.01em}
+.ai3 .muted{color:var(--ai-muted);line-height:1.7;margin:0 0 18px}
+.ai3 .panel{border:1px solid var(--ai-border);border-radius:18px;background:var(--ai-surface);padding:20px;margin:14px 0;box-shadow:0 8px 20px #030b1c40}
+.ai3 .messages{min-height:320px;max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:8px 4px;scrollbar-color:#6785aa #1d2c46}
+.ai3 .bubble{max-width:86%;padding:14px 18px;border-radius:17px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:1rem;box-shadow:0 3px 12px #07122533}
+.ai3 .bubble.user{align-self:flex-end;background:#2458d5;color:#fff;border-bottom-right-radius:5px;border:1px solid #5b88ff}
+.ai3 .bubble.bot{align-self:flex-start;background:#344963;color:#fff;border-bottom-left-radius:5px;border:1px solid #607c9d}
+.ai3 .bubble strong{display:block;margin-top:12px;color:#eaf4ff}
+.ai3 .sources{margin:8px 0 0;padding-left:20px}.ai3 .sources li{margin:5px 0}.ai3 .sources a{color:#9cdbff;text-decoration:underline;text-underline-offset:3px}.ai3 .sources a:hover{color:#fff}.ai3 .sources .source-type{color:#c5d5e9;font-size:.85rem;margin-right:6px}.ai3 .sources a{overflow-wrap:anywhere}
+.ai3 .tips{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
+.ai3 button{border:1px solid #4b7cff;border-radius:12px;background:var(--ai-accent);color:#fff;padding:12px 19px;font-weight:700;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
+.ai3 button:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px)}
+.ai3 button:focus-visible,.ai3 textarea:focus-visible,.ai3 a:focus-visible{outline:3px solid #7dd3fc;outline-offset:3px}
+.ai3 button:disabled{opacity:.6;cursor:wait}
+.ai3 .tips button{background:#2d405e;border:1px solid #607c9d;color:#f1f5f9;padding:9px 15px;font-weight:600;border-radius:999px}
+.ai3 .tips button:hover{background:#405a7b;border-color:#a2cfff}
+.ai3 form{display:flex;gap:12px;align-items:stretch}
+.ai3 textarea{flex:1;min-width:0;min-height:58px;max-height:170px;padding:15px;background:#0d192f;border:1.5px solid #6d89ab;border-radius:12px;resize:vertical;color:#fff;font:inherit;line-height:1.5}
+.ai3 textarea::placeholder{color:#a8bad2;opacity:1}
+.ai3 #ai-submit{min-width:118px}
+.ai3 .meta{font-size:.87rem;color:#c5d5e9;margin:12px 0 0;line-height:1.6}
+.ai3 .visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){.ai3{padding:18px 12px;margin:10px auto;border-radius:16px}.ai3 .panel{padding:12px}.ai3 .messages{min-height:290px;max-height:58vh}.ai3 .bubble{max-width:96%;padding:12px 14px}.ai3 form{flex-direction:column}.ai3 #ai-submit{min-height:48px;width:100%}.ai3 .tips{gap:7px}.ai3 .tips button{font-size:.9rem}}
+@media(prefers-reduced-motion:reduce){.ai3 button{transition:none}.ai3 button:hover:not(:disabled){transform:none}}
+
+/* Balanced responsive layout: preserve useful chat height, never squash to one line. */
+.ai3{
+  min-height:min(760px, calc(100dvh - 145px));
+  height:auto;
+  max-height:none;
+  display:flex;
+  flex-direction:column;
+  overflow:visible;
+  margin:12px auto;
+  padding:20px 22px;
+}
+.ai3 > .back-link,.ai3 > h1,.ai3 > .muted,.ai3 > .tips{flex-shrink:0}
+.ai3 > .back-link{margin-bottom:10px}
+.ai3 > h1{margin-bottom:6px}
+.ai3 > .muted{margin-bottom:10px}
+.ai3 > section.panel[aria-label="AI 對話"]{
+  flex:1 0 auto;
+  min-height:clamp(300px, 42dvh, 480px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  margin:10px 0;
+  padding:14px;
+}
+.ai3 .messages{
+  flex:1 1 auto;
+  height:clamp(270px, 39dvh, 450px);
+  min-height:270px;
+  max-height:450px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.ai3 > .tips{margin:7px 0;gap:8px}
+.ai3 > section.panel[aria-label="提問"]{
+  flex:0 0 auto;
+  margin:7px 0 0;
+  padding:12px;
+}
+.ai3 textarea{min-height:65px;max-height:150px}
+.ai3 .meta{margin-top:7px}
+@media(max-width:600px){
+  .ai3{min-height:0;margin:6px auto;padding:14px 12px;border-radius:16px}
+  .ai3 > section.panel[aria-label="AI 對話"]{min-height:280px;padding:10px;margin:8px 0}
+  .ai3 .messages{height:clamp(250px, 37dvh, 400px);min-height:250px;max-height:400px}
+  .ai3 > section.panel[aria-label="提問"]{padding:10px}
+  .ai3 .tips{margin:6px 0}
+  .ai3 form{gap:8px}
+  .ai3 textarea{min-height:65px;max-height:140px}
+  .ai3 #ai-submit{min-height:46px}
+}
+@media(max-height:650px) and (min-width:601px){
+  .ai3{min-height:0}
+  .ai3 > section.panel[aria-label="AI 對話"]{min-height:260px}
+  .ai3 .messages{height:250px;min-height:240px}
+}
+</style>
+<main class="ai3">
+<a class="back-link" href="{{ url_for('index') }}">← 返回首頁</a>
+<h1>校園 AI 智慧助手</h1>
+<p class="muted">搜尋校園公告、自己的筆記、社團、已加入的聊天室、好友與參與的會議。點擊參考來源可前往相關頁面。</p>
+<section class="panel" aria-label="AI 對話">
+<div id="ai-messages" class="messages" role="log" aria-live="polite" aria-relevant="additions"><div class="bubble bot">你好！可以問我「最近有哪些公告？」或「幫我找資料庫相關筆記」。</div></div>
+</section>
+<div class="tips"><button type="button" data-example="最近有哪些重要公告？">重要公告</button><button type="button" data-example="幫我找 Python 相關筆記">Python 筆記</button><button type="button" data-example="最近有什麼活動？">校園活動</button></div>
+<section class="panel" aria-label="提問">
+<form id="ai-form"><label for="ai-question" class="visually-hidden">輸入問題</label><textarea id="ai-question" maxlength="1000" placeholder="輸入想問的校園問題…" required></textarea><button id="ai-submit" type="submit">傳送問題</button></form>
+<p class="meta" id="ai-status" role="status">只有你有權讀取的資料才應出現在搜尋結果中。請勿輸入密碼或敏感個資。</p>
+</section>
+</main>
+<script>
+(()=>{'use strict';
+const form=document.getElementById('ai-form'),input=document.getElementById('ai-question'),button=document.getElementById('ai-submit'),log=document.getElementById('ai-messages'),status=document.getElementById('ai-status');
+function bubble(content,kind){const el=document.createElement('div');el.className='bubble '+kind;const p=document.createElement('div');p.textContent=content;el.appendChild(p);log.appendChild(el);log.scrollTop=log.scrollHeight;return el;}
+for(const el of document.querySelectorAll('[data-example]'))el.addEventListener('click',()=>{input.value=el.dataset.example;input.focus();});
+form.addEventListener('submit',async e=>{e.preventDefault();const question=input.value.trim();if(!question||button.disabled)return;input.value='';bubble(question,'user');button.disabled=true;status.textContent='正在搜尋資料並整理回答…';
+try{const response=await fetch('/api/ai/v2/ask',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({question})});if(response.status===401){bubble('登入已過期，請重新登入後再試。','bot');return;}if(!response.ok)throw Error('伺服器回應 '+response.status);const data=await response.json();const el=bubble(data.answer||'沒有可顯示的回答。','bot');const sources=Array.isArray(data.sources)?data.sources:[];
+if(sources.length){
+  const heading=document.createElement('strong');heading.textContent='參考來源（點擊前往）';el.appendChild(heading);
+  const list=document.createElement('ol');list.className='sources';
+  const labels={post:'公告',note:'我的筆記',community:'社團',chat_room:'聊天室',meeting:'會議',friend:'好友'};
+  const destinations={community:'/communities/',chat_room:'/chat',meeting:'/meetings/',friend:'/friends'};
+  for(const s of sources){
+    const li=document.createElement('li');
+    const kind=String(s.type||'');
+    const sid=Number(s.id ?? s.source_id);
+    const detail=((kind==='post'||kind==='note')&&Number.isSafeInteger(sid)&&sid>0)?'/ai/source/'+kind+'/'+sid:null;
+    // Only use trusted same-site routes. Never navigate to an arbitrary API-provided URL.
+    const supplied=typeof s.url==='string'?s.url:'';
+    const safeUrl=(supplied.startsWith('/')&&!supplied.startsWith('//')&&!supplied.includes('\\')&&!/[\r\n]/.test(supplied))?supplied:null;
+    const href=detail||((kind in destinations)?destinations[kind]:null)||safeUrl;
+    const type=document.createElement('span');type.className='source-type';type.textContent='['+(labels[kind]||'來源')+']';li.appendChild(type);
+    const name=String(s.title||'未命名資料');
+    if(href){const a=document.createElement('a');a.href=href;a.textContent=name+' ↗';a.title='開啟'+(labels[kind]||'來源');li.appendChild(a);}
+    else {li.appendChild(document.createTextNode(name));}
+    list.appendChild(li);
+  }
+  el.appendChild(list);
+}
+status.textContent=(data.mode==='gemini_or_ollama'||data.mode==='ollama')?'生成式 AI 回答（請核對來源）':data.mode==='retrieval'?'資料檢索摘要（非生成式回答）':'查詢完成';}
+catch(err){bubble('暫時無法取得回答：'+err.message,'bot');status.textContent='請確認網站與資料庫服務是否正常。';}finally{button.disabled=false;input.focus();}});
+})();
+</script>
+{% endblock %}

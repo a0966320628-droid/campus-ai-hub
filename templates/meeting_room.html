@@ -1,0 +1,1403 @@
+{% extends "base.html" %}
+{% block title %}{{ meeting.title }}｜視訊會議{% endblock %}
+
+{% block content %}
+
+<style>
+    .prejoin {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        background: rgba(2,6,23,.97);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: #e2e8f0
+    }
+
+    .prebox {
+        width: min(900px,100%);
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 22px;
+        padding: 22px
+    }
+
+        .prebox h2 {
+            margin-top: 0;
+            color: white
+        }
+
+    .pregrid {
+        display: grid;
+        grid-template-columns: 1.3fr .7fr;
+        gap: 18px
+    }
+
+    .preview {
+        position: relative;
+        min-height: 340px;
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden
+    }
+
+        .preview video {
+            width: 100%;
+            height: 100%;
+            min-height: 340px;
+            object-fit: cover
+        }
+
+    .preoff {
+        position: absolute;
+        inset: 0;
+        display: none;
+        place-items: center;
+        background: #111827;
+        color: #94a3b8
+    }
+
+        .preoff.show {
+            display: grid
+        }
+
+    .settings {
+        display: flex;
+        flex-direction: column;
+        gap: 10px
+    }
+
+    .prebtn, .joinnow, .cancelpre {
+        padding: 11px;
+        border-radius: 11px;
+        border: 1px solid #334155;
+        background: #172033;
+        color: white;
+        font-weight: 700;
+        cursor: pointer
+    }
+
+        .prebtn.off {
+            background: #4c1d1d
+        }
+
+    .joinnow {
+        background: #2563eb;
+        border: 0;
+        margin-top: auto
+    }
+
+    .device label {
+        display: block;
+        color: #94a3b8;
+        font-size: 12px;
+        margin-bottom: 5px
+    }
+
+    .device select {
+        width: 100%;
+        padding: 10px;
+        background: #0b1220;
+        color: white;
+        border: 1px solid #334155;
+        border-radius: 9px
+    }
+
+    .prestatus {
+        font-size: 12px;
+        color: #94a3b8
+    }
+
+    @media(max-width:800px) {
+        .pregrid {
+            grid-template-columns: 1fr
+        }
+
+        .preview, .preview video {
+            min-height: 240px
+        }
+    }
+</style>
+
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .meeting-page {
+        min-height: 100vh;
+        background: #020617;
+        color: #e2e8f0;
+        padding-bottom: 100px;
+    }
+
+    .meeting-header {
+        background: #0f172a;
+        border-bottom: 1px solid #334155;
+        padding: 14px 0;
+    }
+
+    .meeting-header-inner {
+        width: min(1400px, 95%);
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .meeting-title h1 {
+        margin: 0;
+        color: white;
+        font-size: 21px;
+    }
+
+    .meeting-title p {
+        margin: 5px 0 0;
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    .meeting-status {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: #14532d;
+        color: #bbf7d0;
+    }
+
+    .meeting-container {
+        width: min(1400px, 95%);
+        margin: 20px auto;
+    }
+
+    .meeting-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 16px;
+    }
+
+    .video-area {
+        min-width: 0;
+    }
+
+    .video-grid {
+        display: grid;
+        grid-template-columns: repeat( auto-fit, minmax(300px, 1fr) );
+        gap: 12px;
+    }
+
+    .video-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 260px;
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 16px;
+    }
+
+        .video-card video {
+            width: 100%;
+            height: 100%;
+            min-height: 260px;
+            object-fit: cover;
+            background: black;
+            display: block;
+        }
+
+    .video-name {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        background: rgba( 2, 6, 23, 0.75 );
+        color: white;
+        border-radius: 8px;
+        padding: 6px 9px;
+        font-size: 12px;
+    }
+
+    .local-label {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 11px;
+        background: #1d4ed8;
+        color: white;
+    }
+
+    .participants-panel {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 16px;
+    }
+
+        .participants-panel h3 {
+            margin: 0 0 14px;
+            color: white;
+        }
+
+    .participant-count {
+        color: #94a3b8;
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+
+    .participant-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    .participant-item {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .participant-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #334155;
+        color: white;
+        font-weight: bold;
+    }
+
+    .participant-name {
+        color: #e2e8f0;
+        font-size: 13px;
+    }
+
+    .creator-tag {
+        color: #fde68a;
+        font-size: 10px;
+    }
+
+    .meeting-controls {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        transform: translateX(-50%);
+        z-index: 50;
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        justify-content: center;
+        background: rgba( 15, 23, 42, 0.95 );
+        border: 1px solid #334155;
+        border-radius: 18px;
+        padding: 10px;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+    }
+
+    .control-btn {
+        border: none;
+        min-width: 105px;
+        border-radius: 12px;
+        padding: 11px 14px;
+        cursor: pointer;
+        font-weight: 600;
+        background: #334155;
+        color: white;
+        transition: 0.2s;
+    }
+
+        .control-btn:hover {
+            background: #475569;
+        }
+
+        .control-btn.off {
+            background: #7f1d1d;
+        }
+
+        .control-btn.danger {
+            background: #dc2626;
+        }
+
+            .control-btn.danger:hover {
+                background: #b91c1c;
+            }
+
+    .notice {
+        background: #1e293b;
+        border: 1px solid #475569;
+        border-radius: 11px;
+        padding: 11px;
+        margin-bottom: 13px;
+        color: #cbd5e1;
+        font-size: 12px;
+    }
+
+    .creator-dialog {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba( 0, 0, 0, 0.7 );
+    }
+
+        .creator-dialog.show {
+            display: flex;
+        }
+
+    .dialog-box {
+        width: min( 430px, 92% );
+        background: #0f172a;
+        border: 1px solid #475569;
+        border-radius: 18px;
+        padding: 22px;
+    }
+
+        .dialog-box h2 {
+            color: white;
+            margin-top: 0;
+        }
+
+        .dialog-box p {
+            color: #94a3b8;
+            line-height: 1.7;
+        }
+
+    .dialog-actions {
+        display: grid;
+        gap: 9px;
+        margin-top: 18px;
+    }
+
+    @media ( max-width: 900px ) {
+
+        .meeting-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .participants-panel {
+            order: -1;
+        }
+    }
+
+    @media ( max-width: 600px ) {
+
+        .video-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .video-card {
+            min-height: 220px;
+        }
+
+            .video-card video {
+                min-height: 220px;
+            }
+
+        .control-btn {
+            min-width: 70px;
+            font-size: 11px;
+        }
+    }
+</style>
+
+<style>
+    /* ===== Mobile meeting fixes ===== */
+    html, body {
+        min-height: 100%;
+    }
+
+    body {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .meeting-page {
+        min-height: 100dvh !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding-bottom: calc(120px + env(safe-area-inset-bottom)) !important;
+    }
+
+    .prejoin {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        align-items: flex-start !important;
+    }
+
+    .prebox {
+        margin: auto 0;
+    }
+
+    @media (max-width: 600px) {
+        .prejoin {
+            padding: 10px !important;
+        }
+
+        .prebox {
+            padding: 14px !important;
+            border-radius: 16px !important;
+        }
+
+        .pregrid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .preview {
+            min-height: 0 !important;
+            height: min(42dvh, 300px) !important;
+        }
+
+            .preview video {
+                min-height: 0 !important;
+                height: 100% !important;
+            }
+
+        .meeting-container {
+            width: 94% !important;
+            margin: 12px auto !important;
+        }
+
+        .participants-panel {
+            order: 2 !important;
+            max-height: none !important;
+        }
+
+        .video-area {
+            order: 1 !important;
+        }
+
+        .video-card, .video-card video {
+            min-height: 0 !important;
+            height: min(52dvh, 360px) !important;
+        }
+
+        .meeting-controls {
+            left: 8px !important;
+            right: 8px !important;
+            bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+            transform: none !important;
+            width: auto !important;
+            max-height: 32dvh;
+            overflow-y: auto;
+            flex-wrap: nowrap !important;
+            justify-content: flex-start !important;
+        }
+
+        .control-btn {
+            flex: 0 0 auto;
+            min-width: 88px !important;
+        }
+
+        .creator-dialog {
+            overflow-y: auto;
+            padding: 12px;
+        }
+    }
+</style>
+
+
+<style>
+    /* Focus view: independent from WebRTC signalling */
+    .video-card {
+        cursor: pointer;
+    }
+
+        .video-card:focus-visible {
+            outline: 3px solid #60a5fa;
+            outline-offset: 3px;
+        }
+
+    .video-focus-hint {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 2;
+        border: 1px solid #64748b;
+        background: rgba(15,23,42,.85);
+        color: #fff;
+        border-radius: 9px;
+        padding: 7px 10px;
+        font-size: 12px;
+        pointer-events: none;
+    }
+
+    .focus-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: #000;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+        .focus-overlay.active {
+            display: flex;
+        }
+
+    .focus-toolbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
+        background: linear-gradient(to bottom,rgba(0,0,0,.8),transparent);
+        color: #fff;
+    }
+
+        .focus-toolbar button {
+            border: 1px solid #64748b;
+            border-radius: 10px;
+            background: rgba(15,23,42,.9);
+            color: #fff;
+            padding: 9px 13px;
+            cursor: pointer;
+        }
+
+        .focus-toolbar .focus-title {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-weight: 700;
+        }
+
+    .focus-video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+    }
+
+    .focus-help {
+        position: absolute;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: #cbd5e1;
+        font-size: 12px;
+        pointer-events: none;
+    }
+
+    @media (orientation:landscape) and (max-height:600px) {
+        .focus-toolbar {
+            padding: 6px 14px;
+        }
+
+        .focus-help {
+            display: none;
+        }
+    }
+</style>
+
+<div id="focusOverlay" class="focus-overlay" role="dialog" aria-modal="true" aria-label="放大視訊畫面">
+    <div class="focus-toolbar"><span id="focusTitle" class="focus-title">放大視訊</span><div><button id="focusLandscape" type="button">⛶ 全螢幕／橫向</button> <button id="focusClose" type="button">✕ 返回會議</button></div></div>
+    <video id="focusVideo" class="focus-video" autoplay playsinline></video>
+    <div class="focus-help">可將手機橫放觀看，點「返回會議」縮小</div>
+</div>
+
+<div id="prejoin" class="prejoin">
+    <div class="prebox">
+        <h2>加入會議前確認</h2><p>確認自己的畫面與裝置後，再正式加入會議。</p>
+        <div class="pregrid">
+            <div class="preview"><video id="previewVideo" autoplay muted playsinline></video><div id="preOff" class="preoff show">📷 攝影機未開啟</div></div>
+            <div class="settings">
+                <button id="preMic" class="prebtn">🎤 麥克風：開啟</button>
+                {% if meeting.meeting_type == "video" %}<button id="preCam" class="prebtn">📷 攝影機：開啟</button>{% endif %}
+                <div class="device"><label>麥克風</label><select id="audioDevice"><option value="">預設麥克風</option></select></div>
+                {% if meeting.meeting_type == "video" %}<div class="device"><label>攝影機</label><select id="videoDevice"><option value="">預設攝影機</option></select></div>{% endif %}
+                <div id="preStatus" class="prestatus">正在準備裝置…</div><button id="joinNow" class="joinnow">確認加入會議</button><button id="cancelPre" class="cancelpre">返回會議列表</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="meeting-page">
+
+    <header class="meeting-header">
+
+        <div class="meeting-header-inner">
+
+            <div class="meeting-title">
+
+                <h1>
+                    🎥 {{ meeting.title }}
+                </h1>
+
+                <p>
+                    會議代碼：
+                    {{ meeting.meeting_code }}
+
+                    ・
+
+                    {% if meeting.meeting_type == "video" %}
+                    視訊會議
+                    {% else %}
+                    語音會議
+                    {% endif %}
+                </p>
+
+            </div>
+
+            <div class="meeting-status">
+
+                <span class="status-badge">
+                    ● 會議進行中
+                </span>
+
+                {% if current_user.id == meeting.created_by %}
+                <span class="status-badge">
+                    👑 你是建立者
+                </span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <div class="meeting-container">
+
+        <div class="notice">
+            第一次進入時，瀏覽器會詢問是否允許使用攝影機與麥克風。
+            請選擇「允許」。
+        </div>
+
+
+        <div class="meeting-layout">
+
+            <main class="video-area">
+
+                <div id="videoGrid"
+                     class="video-grid">
+
+                    <!-- 自己 -->
+                    <div class="video-card"
+                         id="localVideoCard">
+
+                        <video id="localVideo"
+                               autoplay
+                               muted
+                               playsinline></video>
+
+                        <div class="video-name">
+                            {{ current_user.full_name }}
+                        </div>
+
+                        <div class="local-label">
+                            你
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </main>
+
+
+            <aside class="participants-panel">
+
+                <h3>
+                    👥 參與者
+                </h3>
+
+                <div id="participantCount"
+                     class="participant-count">
+                    目前 1 人
+                </div>
+
+                <div id="participantList"
+                     class="participant-list"></div>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+
+    <!-- 下方按鈕 -->
+    <div class="meeting-controls">
+
+        <button id="microphoneButton"
+                class="control-btn">
+            🎤 麥克風
+        </button>
+
+        {% if meeting.meeting_type == "video" %}
+
+        <button id="cameraButton"
+                class="control-btn">
+            📷 攝影機
+        </button>
+
+        <button id="screenButton"
+                class="control-btn">
+            🖥 分享畫面
+        </button>
+
+        {% endif %}
+
+        <button id="leaveButton"
+                class="control-btn danger">
+            🚪 離開會議
+        </button>
+
+    </div>
+
+
+    <!-- 建立者退出詢問 -->
+    <div id="creatorDialog"
+         class="creator-dialog">
+
+        <div class="dialog-box">
+
+            <h2>
+                你是會議建立者
+            </h2>
+
+            <p>
+                你可以只退出自己的會議，
+                讓其他參與者繼續；
+                也可以直接結束整個會議。
+            </p>
+
+            <div class="dialog-actions">
+
+                <button id="leaveOnlyButton"
+                        class="control-btn">
+                    只退出自己
+                </button>
+
+                <button id="closeAllButton"
+                        class="control-btn danger">
+                    結束所有人的會議
+                </button>
+
+                <button id="cancelLeaveButton"
+                        class="control-btn">
+                    取消
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const meetingId = {{ meeting.id }};
+const currentUserId = {{ current_user.id }};
+const currentUserName = {{ current_user.full_name|tojson }};
+const creatorId = {{ meeting.created_by }};
+const meetingType = {{ meeting.meeting_type|tojson }};
+
+const socket = io({
+    autoConnect: false,
+    reconnection: true,
+    reconnectionAttempts: 8,
+    reconnectionDelay: 700,
+    reconnectionDelayMax: 3000,
+    timeout: 10000,
+    transports: ["websocket", "polling"]
+});
+
+let localStream = null;
+let screenStream = null;
+let joined = false;
+let acknowledged = false;
+let isLeaving = false;
+let micOn = true;
+let camOn = meetingType === "video";
+let joinTimer = null;
+
+const peers = new Map();
+const remoteUsers = new Map();
+const iceQueue = new Map();
+
+const rtcConfiguration = {
+    iceServers: [
+        {urls: "stun:stun.l.google.com:19302"},
+        {urls: "stun:stun1.l.google.com:19302"}
+    ],
+    iceCandidatePoolSize: 2
+};
+
+const E = id => document.getElementById(id);
+
+function esc(v) {
+    const d = document.createElement("div");
+    d.textContent = String(v ?? "");
+    return d.innerHTML;
+}
+
+function statusText(v) {
+    E("preStatus").textContent = v;
+}
+
+async function listDevices() {
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const a = E("audioDevice");
+        const v = E("videoDevice");
+        const oldA = a?.value || "";
+        const oldV = v?.value || "";
+
+        if (a) a.innerHTML = '<option value="">預設麥克風</option>';
+        if (v) v.innerHTML = '<option value="">預設攝影機</option>';
+
+        let ai = 1, vi = 1;
+        for (const d of devices) {
+            if (a && d.kind === "audioinput")
+                a.add(new Option(d.label || `麥克風 ${ai++}`, d.deviceId));
+            if (v && d.kind === "videoinput")
+                v.add(new Option(d.label || `攝影機 ${vi++}`, d.deviceId));
+        }
+
+        if (a && [...a.options].some(o => o.value === oldA)) a.value = oldA;
+        if (v && [...v.options].some(o => o.value === oldV)) v.value = oldV;
+    } catch (e) {
+        console.warn(e);
+    }
+}
+
+function updatePreUI() {
+    const hasVideo = !!localStream?.getVideoTracks().length;
+    E("preOff").classList.toggle("show", !(hasVideo && camOn));
+
+    E("preMic").textContent = micOn ? "🎤 麥克風：開啟" : "🔇 麥克風：關閉";
+    E("preMic").classList.toggle("off", !micOn);
+
+    if (E("preCam")) {
+        E("preCam").textContent = camOn ? "📷 攝影機：開啟" : "📷 攝影機：關閉";
+        E("preCam").classList.toggle("off", !camOn);
+    }
+}
+
+async function prepareMedia() {
+    const audioId = E("audioDevice")?.value || "";
+    const videoId = E("videoDevice")?.value || "";
+
+    localStream?.getTracks().forEach(t => t.stop());
+
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                ...(audioId ? {deviceId: {exact: audioId}} : {})
+            },
+            video: meetingType === "video" ? {
+                width: {ideal: 640},
+                height: {ideal: 360},
+                frameRate: {ideal: 18, max: 20},
+                ...(videoId ? {deviceId: {exact: videoId}} : {})
+            } : false
+        });
+
+        localStream.getAudioTracks().forEach(t => t.enabled = micOn);
+        localStream.getVideoTracks().forEach(t => t.enabled = camOn);
+
+        E("previewVideo").srcObject = localStream;
+        E("localVideo").srcObject = localStream;
+        statusText("裝置已就緒");
+        await listDevices();
+    } catch (e) {
+        console.warn("media:", e);
+        localStream = new MediaStream();
+        micOn = false;
+        camOn = false;
+        statusText("無法取得攝影機或麥克風，但仍可加入會議。");
+    }
+
+    updatePreUI();
+}
+
+E("audioDevice")?.addEventListener("change", prepareMedia);
+E("videoDevice")?.addEventListener("change", prepareMedia);
+
+E("preMic").onclick = () => {
+    micOn = !micOn;
+    localStream?.getAudioTracks().forEach(t => t.enabled = micOn);
+    updatePreUI();
+};
+
+if (E("preCam")) {
+    E("preCam").onclick = () => {
+        camOn = !camOn;
+        localStream?.getVideoTracks().forEach(t => t.enabled = camOn);
+        updatePreUI();
+    };
+}
+
+E("cancelPre").onclick = () => {
+    stopEverything();
+    location.href = "/meetings/";
+};
+
+function createPeer(sid, user) {
+    if (peers.has(sid)) return peers.get(sid);
+
+    const pc = new RTCPeerConnection(rtcConfiguration);
+
+    localStream?.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+    pc.onicecandidate = e => {
+        if (e.candidate && socket.connected) {
+            socket.emit("webrtc_ice_candidate", {
+                target_sid: sid,
+                candidate: e.candidate
+            });
+        }
+    };
+
+    pc.ontrack = e => {
+        if (e.streams?.[0]) showRemoteVideo(sid, user, e.streams[0]);
+    };
+
+    pc.onconnectionstatechange = () => {
+        if (["failed", "closed"].includes(pc.connectionState)) {
+            removePeer(sid);
+        }
+    };
+
+    peers.set(sid, pc);
+    return pc;
+}
+
+
+// ===== Focus view: local/remote video, no new peer connection =====
+let focusedCard = null;
+let focusOriginalMuted = null;
+const focusOverlay = E("focusOverlay");
+const focusVideo = E("focusVideo");
+
+function attachVideoFocus(card) {
+    if (!card || card.dataset.focusReady === "1") return;
+    card.dataset.focusReady = "1";
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", "放大此視訊畫面");
+    const hint = document.createElement("span");
+    hint.className = "video-focus-hint";
+    hint.textContent = "⛶ 點選放大";
+    card.appendChild(hint);
+    card.addEventListener("click", () => openVideoFocus(card));
+    card.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault(); openVideoFocus(card);
+        }
+    });
+}
+
+function openVideoFocus(card) {
+    const sourceVideo = card?.querySelector("video");
+    if (!sourceVideo?.srcObject) return;
+    if (focusedCard) closeVideoFocus();
+    focusedCard = card;
+    focusOriginalMuted = sourceVideo.muted;
+    const name = card.querySelector(".video-name")?.textContent?.trim() || "視訊畫面";
+    E("focusTitle").textContent = name;
+    focusVideo.srcObject = sourceVideo.srcObject;
+    // Only one playback path produces remote audio while expanded.
+    sourceVideo.muted = true;
+    focusVideo.muted = card.id === "localVideoCard";
+    focusOverlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+    focusVideo.play().catch(() => {});
+}
+
+async function closeVideoFocus() {
+    if (!focusedCard) return;
+    const original = focusedCard.querySelector("video");
+    if (original && focusOriginalMuted !== null) original.muted = focusOriginalMuted;
+    focusedCard = null;
+    focusOriginalMuted = null;
+    focusVideo.pause();
+    focusVideo.srcObject = null;
+    focusOverlay.classList.remove("active");
+    document.body.style.overflow = "";
+    try { if (document.fullscreenElement === focusOverlay) await document.exitFullscreen(); } catch (_) {}
+    try { if (screen.orientation?.unlock) screen.orientation.unlock(); } catch (_) {}
+}
+
+E("focusClose").addEventListener("click", closeVideoFocus);
+E("focusLandscape").addEventListener("click", async () => {
+    try {
+        if (focusOverlay.requestFullscreen && document.fullscreenElement !== focusOverlay) {
+            await focusOverlay.requestFullscreen();
+        }
+    } catch (e) { console.info("Fullscreen unavailable:", e); }
+    try { if (screen.orientation?.lock) await screen.orientation.lock("landscape"); }
+    catch (e) { console.info("Rotate device manually:", e); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeVideoFocus(); });
+document.addEventListener("fullscreenchange", () => {
+    if (focusedCard && !document.fullscreenElement) {
+        try { screen.orientation?.unlock?.(); } catch (_) {}
+    }
+});
+attachVideoFocus(E("localVideoCard"));
+
+function showRemoteVideo(sid, user, stream) {
+    let card = E(`remote-${sid}`);
+
+    if (!card) {
+        card = document.createElement("div");
+        card.className = "video-card";
+        card.id = `remote-${sid}`;
+        card.innerHTML =
+            `<video autoplay playsinline></video>
+             <div class="video-name">${esc(user?.full_name || "參與者")}</div>`;
+        E("videoGrid").appendChild(card);
+    }
+
+    card.querySelector("video").srcObject = stream;
+    attachVideoFocus(card);
+}
+
+function removePeer(sid) {
+    if (focusedCard?.id === `remote-${sid}`) closeVideoFocus();
+    peers.get(sid)?.close();
+    peers.delete(sid);
+    iceQueue.delete(sid);
+    remoteUsers.delete(sid);
+    E(`remote-${sid}`)?.remove();
+    renderParticipants();
+}
+
+function renderParticipants() {
+    const list = E("participantList");
+    list.innerHTML = "";
+
+    const users = [
+        {user_id: currentUserId, full_name: currentUserName},
+        ...remoteUsers.values()
+    ];
+
+    for (const u of users) {
+        const x = document.createElement("div");
+        x.className = "participant-item";
+        x.innerHTML =
+            `<div class="participant-avatar">${esc((u.full_name || "U")[0])}</div>
+             <div>
+               <div class="participant-name">${esc(u.full_name)}</div>
+               ${Number(u.user_id) === Number(creatorId)
+                   ? '<div class="creator-tag">👑 建立者</div>' : ''}
+             </div>`;
+        list.appendChild(x);
+    }
+
+    E("participantCount").textContent = `目前 ${users.length} 人`;
+}
+
+async function createOfferTo(sid, user) {
+    try {
+        const pc = createPeer(sid, user);
+        if (pc.signalingState !== "stable") return;
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        socket.emit("webrtc_offer", {
+            target_sid: sid,
+            offer: pc.localDescription
+        });
+    } catch (e) {
+        console.error("offer:", e);
+    }
+}
+
+E("joinNow").onclick = () => {
+    if (joined) return;
+
+    joined = true;
+    acknowledged = false;
+    E("joinNow").disabled = true;
+    statusText("正在連線到會議…");
+
+    if (socket.connected) {
+        socket.emit("join_meeting", {meeting_id: meetingId});
+    } else {
+        socket.connect();
+    }
+
+    clearTimeout(joinTimer);
+    joinTimer = setTimeout(() => {
+        if (!acknowledged) {
+            joined = false;
+            E("joinNow").disabled = false;
+            statusText("加入逾時，請再試一次。");
+            socket.disconnect();
+        }
+    }, 15000);
+};
+
+socket.on("connect", () => {
+    if (joined && !acknowledged) {
+        statusText("已連線，正在加入會議…");
+        socket.emit("join_meeting", {meeting_id: meetingId});
+    }
+});
+
+socket.on("connect_error", e => {
+    console.error("connect_error:", e);
+    joined = false;
+    acknowledged = false;
+    E("joinNow").disabled = false;
+    statusText("無法連線到會議伺服器，請重試。");
+});
+
+socket.on("meeting_joined", data => {
+    acknowledged = true;
+    clearTimeout(joinTimer);
+    E("prejoin").style.display = "none";
+
+    remoteUsers.clear();
+    for (const u of (data.participants || [])) {
+        if (u.socket_id) remoteUsers.set(u.socket_id, u);
+    }
+    renderParticipants();
+});
+
+socket.on("meeting_error", data => {
+    clearTimeout(joinTimer);
+    joined = false;
+    acknowledged = false;
+    E("joinNow").disabled = false;
+    statusText(data?.message || "加入失敗");
+});
+
+socket.on("participant_joined", async u => {
+    if (!u?.socket_id || u.socket_id === socket.id) return;
+    remoteUsers.set(u.socket_id, u);
+    renderParticipants();
+
+    // Only existing participant sends an offer to newcomer.
+    await createOfferTo(u.socket_id, u);
+});
+
+socket.on("webrtc_offer", async data => {
+    try {
+        if (!data?.sender_sid || !data?.offer) return;
+
+        const u = remoteUsers.get(data.sender_sid) || {
+            user_id: data.sender_user_id,
+            full_name: data.sender_name || "參與者",
+            socket_id: data.sender_sid
+        };
+
+        remoteUsers.set(data.sender_sid, u);
+        renderParticipants();
+
+        const pc = createPeer(data.sender_sid, u);
+        await pc.setRemoteDescription(data.offer);
+
+        for (const c of (iceQueue.get(data.sender_sid) || [])) {
+            await pc.addIceCandidate(c);
+        }
+        iceQueue.delete(data.sender_sid);
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        socket.emit("webrtc_answer", {
+            target_sid: data.sender_sid,
+            answer: pc.localDescription
+        });
+    } catch (e) {
+        console.error("webrtc_offer:", e);
+    }
+});
+
+socket.on("webrtc_answer", async data => {
+    try {
+        const pc = peers.get(data?.sender_sid);
+        if (!pc || !data?.answer) return;
+
+        if (pc.signalingState === "have-local-offer") {
+            await pc.setRemoteDescription(data.answer);
+        }
+
+        for (const c of (iceQueue.get(data.sender_sid) || [])) {
+            await pc.addIceCandidate(c);
+        }
+        iceQueue.delete(data.sender_sid);
+    } catch (e) {
+        console.error("webrtc_answer:", e);
+    }
+});
+
+socket.on("webrtc_ice_candidate", async data => {
+    try {
+        if (!data?.sender_sid || !data?.candidate) return;
+
+        const pc = peers.get(data.sender_sid);
+
+        if (!pc || !pc.remoteDescription) {
+            if (!iceQueue.has(data.sender_sid)) iceQueue.set(data.sender_sid, []);
+            iceQueue.get(data.sender_sid).push(data.candidate);
+            return;
+        }
+
+        await pc.addIceCandidate(data.candidate);
+    } catch (e) {
+        console.warn("ice:", e);
+    }
+});
+
+socket.on("participant_left", data => {
+    if (data?.socket_id) removePeer(data.socket_id);
+});
+
+socket.on("meeting_closed", data => {
+    isLeaving = true;
+    stopEverything();
+    alert(data?.message || "會議已結束");
+    location.href = "/meetings/";
+});
+
+E("microphoneButton").onclick = function () {
+    const t = localStream?.getAudioTracks()[0];
+    if (!t) return;
+    t.enabled = !t.enabled;
+    micOn = t.enabled;
+    this.classList.toggle("off", !t.enabled);
+    this.textContent = t.enabled ? "🎤 麥克風" : "🔇 已靜音";
+};
+
+if (E("cameraButton")) {
+    E("cameraButton").onclick = function () {
+        const t = localStream?.getVideoTracks()[0];
+        if (!t) return;
+        t.enabled = !t.enabled;
+        camOn = t.enabled;
+        this.classList.toggle("off", !t.enabled);
+        this.textContent = t.enabled ? "📷 攝影機" : "📷 已關閉";
+    };
+}
+
+if (E("screenButton")) {
+    E("screenButton").onclick = async () => {
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({
+                video: {frameRate: {ideal: 15, max: 20}},
+                audio: false
+            });
+
+            const screenTrack = screenStream.getVideoTracks()[0];
+
+            for (const pc of peers.values()) {
+                const sender = pc.getSenders().find(s => s.track?.kind === "video");
+                if (sender) await sender.replaceTrack(screenTrack);
+            }
+
+            E("localVideo").srcObject = screenStream;
+
+            screenTrack.onended = async () => {
+                const cameraTrack = localStream?.getVideoTracks()[0];
+                if (!cameraTrack) return;
+
+                for (const pc of peers.values()) {
+                    const sender = pc.getSenders().find(s => s.track?.kind === "video");
+                    if (sender) await sender.replaceTrack(cameraTrack);
+                }
+                E("localVideo").srcObject = localStream;
+            };
+        } catch (e) {
+            console.warn("screen:", e);
+        }
+    };
+}
+
+E("leaveButton").onclick = () => {
+    if (Number(currentUserId) === Number(creatorId)) {
+        E("creatorDialog").classList.add("show");
+    } else {
+        leaveMeeting(false);
+    }
+};
+
+E("leaveOnlyButton").onclick = () => leaveMeeting(false);
+E("closeAllButton").onclick = () => leaveMeeting(true);
+E("cancelLeaveButton").onclick = () =>
+    E("creatorDialog").classList.remove("show");
+
+function leaveMeeting(closeAll) {
+    if (isLeaving) return;
+    isLeaving = true;
+
+    const finishLeave = () => {
+        stopEverything();
+        location.href = "/meetings/";
+    };
+
+    if (!socket.connected) {
+        finishLeave();
+        return;
+    }
+
+    // 等伺服器完成「離開 / 最後一人結束會議」後再跳頁，
+    // 避免手機網路較慢時 emit 還沒送完就 disconnect。
+    socket.timeout(3000).emit(
+        "leave_meeting",
+        {
+            meeting_id: meetingId,
+            close_for_all: closeAll
+        },
+        () => finishLeave()
+    );
+
+    // Socket.IO timeout callback 在不同環境可能沒有回來，保底離開。
+    setTimeout(() => {
+        if (isLeaving) finishLeave();
+    }, 3500);
+}
+
+function stopEverything() {
+    if (focusedCard) closeVideoFocus();
+    clearTimeout(joinTimer);
+    localStream?.getTracks().forEach(t => t.stop());
+    screenStream?.getTracks().forEach(t => t.stop());
+    peers.forEach(p => p.close());
+    peers.clear();
+    remoteUsers.clear();
+    iceQueue.clear();
+    if (socket.connected) socket.disconnect();
+}
+
+renderParticipants();
+prepareMedia();
+</script>
+
+{% endblock %}

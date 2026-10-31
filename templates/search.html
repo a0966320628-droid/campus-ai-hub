@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}全站搜尋｜Campus AI{% endblock %}
+{% block content %}
+<style>
+/* 全部樣式限制在搜尋頁，避免與 base.html 的 .section/.badge 等全域樣式衝突 */
+.campus-search{--cs-bg:#172338;--cs-border:#334765;--cs-text:#f8fafc;--cs-muted:#cbd5e1;--cs-link:#bfdbfe;max-width:1150px;margin:28px auto;padding:0 18px 36px;color:var(--cs-text)}
+.campus-search,.campus-search *{box-sizing:border-box}
+.campus-search .cs-hero{background:linear-gradient(130deg,#172554,#312e81);border:1px solid #3b438b;border-radius:20px;padding:28px;margin-bottom:22px;color:#fff}
+.campus-search .cs-back{display:inline-block;color:#e0e7ff!important;text-decoration:none;margin-bottom:8px;font-weight:600}
+.campus-search .cs-back:hover{text-decoration:underline}
+.campus-search .cs-hero h1{color:#fff!important;font-size:clamp(25px,4vw,34px);font-weight:800;margin:6px 0 14px;line-height:1.3}
+.campus-search .cs-hero p{color:#e0e7ff!important;margin:0;line-height:1.7}
+.campus-search .cs-form{display:flex;gap:10px;margin-top:20px}
+.campus-search .cs-input{flex:1;min-width:0;min-height:48px;padding:12px 15px;border:1px solid #52617d;border-radius:12px;background:#0f172a!important;color:#fff!important;font-size:16px;outline:none}
+.campus-search .cs-input::placeholder{color:#94a3b8!important;opacity:1}
+.campus-search .cs-input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(147,197,253,.22)}
+.campus-search .cs-button{border:0;border-radius:12px;padding:12px 24px;background:#2563eb!important;color:#fff!important;font-weight:700;cursor:pointer;min-height:48px}
+.campus-search .cs-button:hover{background:#1d4ed8!important}
+.campus-search .cs-summary{color:#e2e8f0!important;font-size:15px;margin:4px 0 18px}
+.campus-search .cs-summary strong{color:#fff!important}
+.campus-search .cs-section{background:var(--cs-bg)!important;border:1px solid var(--cs-border)!important;border-radius:18px;padding:20px 22px;margin-bottom:18px;color:var(--cs-text)!important;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.campus-search .cs-section h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:21px;line-height:1.4;font-weight:800;color:#fff!important;margin:0 0 8px}
+.campus-search .cs-count{display:inline-flex;align-items:center;justify-content:center;min-width:25px;padding:3px 9px;border-radius:999px;background:#294c87;color:#eff6ff;font-size:12px;font-weight:700}
+.campus-search .cs-result{padding:16px 0;border-bottom:1px solid #3b4c66}
+.campus-search .cs-result:last-child{border-bottom:0;padding-bottom:3px}
+.campus-search .cs-title{font-size:17px;font-weight:750;color:#f8fafc!important;text-decoration:none;line-height:1.6;overflow-wrap:anywhere}
+.campus-search a.cs-title{color:var(--cs-link)!important}
+.campus-search a.cs-title:hover{text-decoration:underline;color:#fff!important}
+.campus-search a.cs-title:focus-visible{outline:2px solid #93c5fd;outline-offset:3px;border-radius:3px}
+.campus-search .cs-meta{font-size:13px;color:#cbd5e1!important;margin-top:5px;line-height:1.6;overflow-wrap:anywhere}
+.campus-search .cs-desc{font-size:15px;color:#e2e8f0!important;margin-top:7px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.campus-search .cs-empty{text-align:center;color:#cbd5e1!important;padding:28px}
+@media(max-width:650px){.campus-search{padding:0 12px 28px;margin:14px auto}.campus-search .cs-hero{padding:20px 17px}.campus-search .cs-form{flex-direction:column}.campus-search .cs-button{width:100%}.campus-search .cs-section{padding:17px 16px}.campus-search .cs-section h2{font-size:19px}}
+</style>
+<div class="campus-search">
+  <div class="cs-hero">
+    <a class="cs-back" href="{{ url_for('dashboard') }}">← 回首頁</a>
+    <h1>🔍 全站搜尋</h1>
+    <p>一次搜尋公告、筆記、學生與社團。</p>
+    <form class="cs-form" method="GET" action="{{ url_for('global_search') }}">
+      <input class="cs-input" type="search" name="q" value="{{ keyword or '' }}" placeholder="例如：AI、Python、競賽、王小明" aria-label="搜尋關鍵字" required>
+      <button class="cs-button" type="submit">搜尋</button>
+    </form>
+  </div>
+
+  {% if keyword %}
+    <p class="cs-summary">「{{ keyword }}」共找到 <strong>{{ total_results }}</strong> 筆結果</p>
+    {% if total_results == 0 %}<div class="cs-section cs-empty">找不到相關資料，請換一個關鍵字。</div>{% endif %}
+
+    {% if posts %}
+      <section class="cs-section"><h2>📢 公告 <span class="cs-count">{{ posts|length }}</span></h2>
+      {% for post in posts %}
+        <div class="cs-result"><a class="cs-title" href="{{ url_for('search_detail.search_post_detail', post_id=post.id) }}">{{ post.title }} ↗</a>
+          <div class="cs-meta">{{ post.category or '一般資訊' }}{% if post.author %} · {{ post.author.full_name }}{% endif %}</div>
+          <div class="cs-desc">{{ (post.content or '')|truncate(180) }}</div>
+        </div>
+      {% endfor %}</section>
+    {% endif %}
+
+    {% if notes %}
+      <section class="cs-section"><h2>📝 筆記 <span class="cs-count">{{ notes|length }}</span></h2>
+      {% for note in notes %}
+        <div class="cs-result"><a class="cs-title" href="{{ url_for('search_detail.search_note_detail', note_id=note.id) }}">{{ note.title }} ↗</a>
+          <div class="cs-meta">{{ note.category or '一般筆記' }}{% if note.owner %} · {{ note.owner.full_name }}{% endif %}</div>
+          <div class="cs-desc">{{ (note.content or '')|truncate(180) }}</div>
+        </div>
+      {% endfor %}</section>
+    {% endif %}
+
+    {% if users %}
+      <section class="cs-section"><h2>👤 學生 <span class="cs-count">{{ users|length }}</span></h2>
+      {% for user in users %}
+        <div class="cs-result"><a class="cs-title" href="{{ url_for('public_user_profile', user_id=user.id) }}">{{ user.full_name }}</a>
+          <div class="cs-meta">@{{ user.username }}{% if user.student_no %} · {{ user.student_no }}{% endif %}{% if user.department %} · {{ user.department.name }}{% endif %}</div>
+          {% if user.interests %}<div class="cs-desc">興趣：{{ user.interests }}</div>{% endif %}
+        </div>
+      {% endfor %}</section>
+    {% endif %}
+
+    {% if communities %}
+      <section class="cs-section"><h2>👥 社團 / 群組 <span class="cs-count">{{ communities|length }}</span></h2>
+      {% for community in communities %}
+        <div class="cs-result"><a class="cs-title" href="{{ url_for('search_detail.search_community_open', community_id=community.id) }}">{{ community.name }} ↗</a>
+          <div class="cs-meta">{{ community.community_type }}</div>
+          <div class="cs-desc">{{ community.description or '沒有說明' }}</div>
+        </div>
+      {% endfor %}</section>
+    {% endif %}
+  {% else %}
+    <div class="cs-section cs-empty">請在上方輸入關鍵字開始搜尋。</div>
+  {% endif %}
+</div>
+{% endblock %}

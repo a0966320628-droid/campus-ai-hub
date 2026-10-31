@@ -1,0 +1,28 @@
+# API Key 與環境變數
+.env
+.env.*
+!.env.example
+
+# Python 虛擬環境
+.venv/
+venv/
+
+# Python 暫存檔
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 備份
+backups/
+
+# SQLite 資料庫
+*.db
+*.sqlite
+*.sqlite3
+
+# 使用者上傳檔案
+static/uploads/
+
+# 編輯器暫存
+.vscode/
+.idea/

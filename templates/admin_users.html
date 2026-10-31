@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}使用者管理｜校園 AI 學生資訊交換系統{% endblock %}
+{% block content %}
+<header class="topbar">
+  <div class="container">
+    <div class="brand">
+      <strong>管理者後台</strong>
+      <span class="muted">使用者管理與刪除</span>
+    </div>
+    <div class="actions">
+      <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">返回首頁</a>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <button class="btn btn-outline" type="submit">登出</button>
+      </form>
+    </div>
+  </div>
+</header>
+<div class="container" style="padding:24px 0 40px;">
+  <div class="card panel">
+    <h2>全部使用者</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>姓名</th>
+          <th>帳號</th>
+          <th>角色</th>
+          <th>生日</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>{{ user.full_name }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ '管理員' if user.role == 'admin' else '使用者' }}</td>
+          <td>{{ user.birthday }}</td>
+          <td>
+            {% if user.role != 'admin' %}
+            <form method="post" action="{{ url_for('admin.delete_user', user_id=user.id) }}" onsubmit="return confirm('確定要刪除此使用者嗎？');">
+              <button class="btn btn-danger" type="submit">刪除使用者</button>
+            </form>
+            {% else %}
+            <span class="muted">管理員不可刪除</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

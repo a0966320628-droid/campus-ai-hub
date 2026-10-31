@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}註冊｜校園 AI 學生資訊交換系統{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<style>
+    /* 生日欄位沿用網站原本 input 樣式 */
+    .birthday-wrapper {
+        position: relative;
+    }
+
+        .birthday-wrapper input {
+            padding-right: 48px;
+            cursor: pointer;
+        }
+
+    /* 月曆按鈕 */
+    .calendar-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+    }
+
+        .calendar-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+    /* 彈出的月曆 */
+    .flatpickr-calendar {
+        border-radius: 12px !important;
+    }
+
+    .flatpickr-day.selected,
+    .flatpickr-day.selected:hover {
+        background: #111 !important;
+        border-color: #111 !important;
+        color: #fff !important;
+    }
+
+    .flatpickr-day.today {
+        border-color: #111 !important;
+    }
+</style>
+
+<div class="auth-page">
+    <div class="card auth-card">
+
+        <h1>建立新帳號</h1>
+
+        <p class="muted">
+            請填寫姓名、帳號、密碼、生日。若帳號重複，系統會提示已註冊過。
+        </p>
+
+        <form method="post" action="{{ url_for('auth.register') }}">
+
+            <div class="field">
+                <label for="full_name">姓名</label>
+                <input id="full_name"
+                       type="text"
+                       name="full_name"
+                       required>
+            </div>
+
+            <div class="field">
+                <label for="username">帳號</label>
+                <input id="username"
+                       type="text"
+                       name="username"
+                       autocomplete="username"
+                       required>
+            </div>
+
+            <div class="field">
+                <label for="password">密碼</label>
+                <input id="password"
+                       type="password"
+                       name="password"
+                       autocomplete="new-password"
+                       required>
+            </div>
+
+            <div class="field">
+                <label for="birthday">生日</label>
+
+                <div class="birthday-wrapper">
+                    <input id="birthday"
+                           type="text"
+                           name="birthday"
+                           placeholder="請選擇生日"
+                           autocomplete="bday"
+                           readonly
+                           required>
+
+                    <button id="calendarBtn"
+                            class="calendar-btn"
+                            type="button"
+                            aria-label="選擇生日">
+
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2">
+                            <rect x="3" y="5"
+                                  width="18" height="16"
+                                  rx="2" />
+                            <path d="M8 3v4M16 3v4M3 11h18" />
+                        </svg>
+
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" type="submit">
+                    完成註冊
+                </button>
+
+                <a class="btn btn-outline"
+                   href="{{ url_for('index') }}">
+                    返回登入
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const picker = flatpickr("#birthday", {
+            locale: "zh_tw",
+            dateFormat: "Y-m-d",
+            minDate: "1900-01-01",
+            maxDate: "today",
+            monthSelectorType: "dropdown",
+            disableMobile: true
+        });
+
+        document.querySelector("#calendarBtn")
+            .addEventListener("click", () => picker.open());
+
+    });
+</script>
+
+{% endblock %}

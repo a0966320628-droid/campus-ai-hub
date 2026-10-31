@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}首頁｜Campus AI Hub{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <header class="dashboard-topbar">
+        <div class="dashboard-topbar-inner">
+            <a href="/dashboard" class="brand-area" aria-label="回到首頁">
+                <div class="brand-logo">🎓</div>
+                <div class="brand-text">
+                    <h1>Campus AI Hub</h1>
+                    <p>校園智慧資訊交換平台</p>
+                </div>
+            </a>
+
+            <div class="top-user-area">
+                <a href="/notifications" class="icon-action notification-btn" title="通知">
+                    🔔
+                    <span id="notificationBadge" class="notification-badge {% if total_notification_count == 0 %}is-zero{% endif %}">
+                        {{ total_notification_count }}
+                    </span>
+                </a>
+
+                {% if current_user.role == "admin" %}
+                <a href="/admin/users" class="icon-action" title="管理後台">⚙️</a>
+                {% endif %}
+
+                <a href="/profile" class="user-chip" title="個人資訊">
+                    {% if current_user.avatar_url %}
+                    <img class="top-avatar" src="{{ current_user.avatar_url }}" alt="頭像">
+                    {% else %}
+                    <div class="top-avatar top-avatar-placeholder">
+                        {{ (current_user.full_name or current_user.username or "U")[0] }}
+                    </div>
+                    {% endif %}
+                    <div class="user-chip-text">
+                        <span class="top-user-name">{{ current_user.full_name or current_user.username }}</span>
+                        <span class="top-user-role">{% if current_user.role == "admin" %}系統管理員{% else %}校園使用者{% endif %}</span>
+                    </div>
+                </a>
+
+                <a href="/logout" class="logout-link">登出</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-container">
+        <section class="hero-section">
+            <div class="hero-copy">
+                <div class="eyebrow">CAMPUS AI HUB</div>
+                <h2>歡迎回來，{{ current_user.full_name or current_user.username }} 👋</h2>
+                <p>快速查看校園資訊、處理通知，或直接前往你需要的功能。</p>
+
+                <div class="welcome-tags">
+                    {% if current_user.department %}
+                    <span class="welcome-tag">🏫 {{ current_user.department.name }}</span>
+                    {% endif %}
+                    {% if current_user.grade_level %}
+                    <span class="welcome-tag">🎓 {{ current_user.grade_level }}</span>
+                    {% endif %}
+                    {% if current_user.student_no %}
+                    <span class="welcome-tag">🪪 {{ current_user.student_no }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <a href="/ai-assistant" class="hero-ai-action" aria-label="前往 AI 智慧助手">
+                <span class="hero-ai-icon">🤖</span>
+                <span>
+                    <strong>AI 智慧助手</strong>
+                    <small>Gemini AI 智慧問答、校園資訊搜尋與學習協助</small>
+                </span>
+                <span class="hero-arrow">→</span>
+            </a>
+        </section>
+
+        <section class="quick-section">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">QUICK ACCESS</span>
+                    <h3>快速功能</h3>
+                </div>
+            </div>
+
+            <div class="quick-grid">
+                <a href="/ai-assistant" class="quick-card"><span class="quick-icon">🤖</span><span>AI 助手</span></a>
+                <a href="/announcements" class="quick-card"><span class="quick-icon">📢</span><span>公告資訊</span></a>
+                <a href="/notes" class="quick-card"><span class="quick-icon">📝</span><span>智慧筆記</span></a>
+                <a href="/chat" class="quick-card"><span class="quick-icon">💬</span><span>聊天室</span></a>
+                <a href="/friends" class="quick-card"><span class="quick-icon">👥</span><span>好友</span></a>
+                <a href="/communities/" class="quick-card"><span class="quick-icon">🏫</span><span>社團群組</span></a>
+                <a href="/meetings/" class="quick-card"><span class="quick-icon">🎥</span><span>語音視訊</span></a>
+                <a href="/search" class="quick-card"><span class="quick-icon">🔎</span><span>全站搜尋</span></a>
+            </div>
+        </section>
+        
+        <div class="content-grid">
+            <section class="panel announcements-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="section-kicker">LATEST</span>
+                        <h3>📢 最新公告</h3>
+                    </div>
+                    <a href="/announcements" class="panel-link">查看全部 →</a>
+                </div>
+                <div id="recentAnnouncements" class="announcement-list">
+                    <div class="loading">正在讀取最新公告...</div>
+                </div>
+            </section>
+
+            <aside class="side-stack">
+                <section class="panel attention-panel">
+                    <div class="panel-header compact">
+                        <div>
+                            <span class="section-kicker">TO DO</span>
+                            <h3>🔔 待處理事項</h3>
+                        </div>
+                    </div>
+
+                    <div class="attention-list">
+                        <a href="/notifications" class="attention-item">
+                            <span class="attention-icon">👥</span>
+                            <span class="attention-text">
+                                <strong>好友邀請</strong>
+                                <small>等待你接受或拒絕</small>
+                            </span>
+                            <span id="pendingFriendCount" class="attention-count">{{ pending_friend_count }}</span>
+                        </a>
+
+                        <a href="/chat" class="attention-item">
+                            <span class="attention-icon">💬</span>
+                            <span class="attention-text">
+                                <strong>未讀訊息</strong>
+                                <small>查看尚未閱讀的聊天</small>
+                            </span>
+                            <span id="unreadMessageCount" class="attention-count">{{ unread_message_count }}</span>
+                        </a>
+                    </div>
+
+                    <a href="/notifications" class="attention-all-link">查看所有通知 →</a>
+                </section>
+
+                <section class="ai-summary-panel">
+                    <div class="ai-summary-head">
+                        <span class="ai-summary-icon">🤖</span>
+                        <div>
+                            <span class="section-kicker">AI SUMMARY</span>
+                            <h3>今日摘要</h3>
+                        </div>
+                    </div>
+                    <p class="ai-summary-text">{{ dashboard_ai_summary }}</p>
+                    {% if ai_priority_count > 0 %}
+                    <div class="ai-summary-meta">⭐ {{ ai_priority_count }} 筆優先資訊</div>
+                    {% endif %}
+                    <a href="/ai-assistant" class="ai-summary-link">繼續詢問 Campus AI →</a>
+                </section>
+            </aside>
+        </div>
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

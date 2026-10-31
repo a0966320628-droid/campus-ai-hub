@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% block title %}智慧筆記管理｜Campus AI Hub{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/notes.css') }}">
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="notes-page">
+
+    <header class="notes-topbar">
+        <div class="notes-topbar-inner">
+            <div class="page-brand">
+                <h1>📝 智慧筆記管理</h1>
+                <p>
+                    建立、修改、搜尋與分類筆記，並加入文件、圖片、影片與音檔附件。
+                </p>
+            </div>
+
+            <div class="top-actions">
+                <a class="btn btn-secondary" href="/dashboard">
+                    🏠 返回首頁
+                </a>
+
+                <a class="btn btn-secondary" href="/profile">
+                    👤 個人資訊
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="notes-container">
+
+        <div id="messageBox" class="message-box"></div>
+
+        <div class="notes-layout">
+
+            <!-- 左側筆記列表 -->
+            <aside class="panel sidebar">
+
+                <div class="sidebar-header">
+                    <h2>我的筆記</h2>
+
+                    <button class="btn btn-primary"
+                            type="button"
+                            onclick="newNote()">
+                        ＋新增
+                    </button>
+                </div>
+
+                <div class="search-box">
+                    <input id="searchInput"
+                           class="form-control"
+                           type="text"
+                           placeholder="搜尋標題或內容...">
+
+                    <select id="searchCategory"
+                            class="form-control">
+                        <option value="">全部分類</option>
+                        <option value="一般筆記">一般筆記</option>
+                        <option value="課堂筆記">課堂筆記</option>
+                        <option value="專題">專題</option>
+                        <option value="會議紀錄">會議紀錄</option>
+                        <option value="考試整理">考試整理</option>
+                        <option value="個人筆記">個人筆記</option>
+                    </select>
+                </div>
+
+                <div class="category-tabs">
+                    <button class="category-btn active"
+                            data-category="">
+                        全部
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="課堂筆記">
+                        課堂
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="專題">
+                        專題
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="會議紀錄">
+                        會議
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="考試整理">
+                        考試
+                    </button>
+                </div>
+
+                <div id="noteList" class="note-list">
+                    <div class="empty-state">
+                        正在載入筆記...
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- 右側編輯器 -->
+            <main class="panel editor-panel">
+
+                <div class="editor-header">
+                    <div>
+                        <h2 id="editorTitle">
+                            新增筆記
+                        </h2>
+                    </div>
+
+                    <div class="editor-actions">
+
+                        <button class="btn btn-success"
+                                type="button"
+                                onclick="saveCurrentNote()">
+                            💾 儲存
+                        </button>
+
+                        <button id="deleteNoteButton"
+                                class="btn btn-danger"
+                                type="button"
+                                onclick="deleteCurrentNote()"
+                                style="display:none;">
+                            🗑 刪除
+                        </button>
+
+                    </div>
+                </div>
+
+                <div id="noteInfoBar"
+                     class="note-info-bar"
+                     style="display:none;">
+                    <span id="noteIdText"></span>
+                    <span id="createdAtText"></span>
+                    <span id="updatedAtText"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="noteTitle"
+                           class="form-label">
+                        筆記標題
+                    </label>
+
+                    <input id="noteTitle"
+                           class="form-control"
+                           type="text"
+                           placeholder="例如：計算機結構期末考整理"
+                           maxlength="200">
+
+                    <div class="helper-text">
+                        每份筆記都需要一個清楚的標題。
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="noteCategory"
+                           class="form-label">
+                        筆記分類
+                    </label>
+
+                    <select id="noteCategory"
+                            class="form-control">
+                        <option value="一般筆記">一般筆記</option>
+                        <option value="課堂筆記">課堂筆記</option>
+                        <option value="專題">專題</option>
+                        <option value="會議紀錄">會議紀錄</option>
+                        <option value="考試整理">考試整理</option>
+                        <option value="個人筆記">個人筆記</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="noteContent"
+                           class="form-label">
+                        筆記內容
+                    </label>
+
+                    <textarea id="noteContent"
+                              class="form-control"
+                              placeholder="在這裡輸入筆記內容..."></textarea>
+                </div>
+
+                <!-- 附件功能 -->
+                <div id="attachmentSection" style="display:none;">
+
+                    <h3 class="section-title">
+                        📎 筆記附件
+                    </h3>
+
+                    <div class="upload-box">
+
+                        <input id="attachmentFile"
+                               type="file">
+
+                        <div class="upload-hints">
+
+                            <div class="upload-hint">
+                                📄 <strong>文件</strong><br>
+                                PDF、Word、PowerPoint、Excel、TXT、CSV
+                            </div>
+
+                            <div class="upload-hint">
+                                🖼️ <strong>圖片</strong><br>
+                                PNG、JPG、JPEG、GIF、WEBP
+                            </div>
+
+                            <div class="upload-hint">
+                                🎬 <strong>影片</strong><br>
+                                MP4、WEBM、MOV
+                            </div>
+
+                            <div class="upload-hint">
+                                🎵 <strong>音檔</strong><br>
+                                MP3、WAV、M4A、OGG
+                            </div>
+
+                            <div class="upload-hint">
+                                🗜️ <strong>壓縮檔</strong><br>
+                                ZIP、RAR、7Z
+                            </div>
+
+                            <div class="upload-hint">
+                                💻 <strong>程式碼</strong><br>
+                                PY、JAVA、CPP、JS、HTML、CSS、JSON 等
+                            </div>
+
+                        </div>
+
+                        <button class="btn btn-primary"
+                                type="button"
+                                onclick="uploadAttachment()">
+                            ⬆ 上傳附件
+                        </button>
+
+                        <div id="progressArea"
+                             class="progress-area">
+                            <div class="progress-track">
+                                <div id="progressBar"
+                                     class="progress-bar"></div>
+                            </div>
+
+                            <div id="progressText"
+                                 class="progress-text">
+                                準備上傳
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <h3 class="section-title">
+                        已加入的附件
+                    </h3>
+
+                    <div id="attachmentList"
+                         class="attachments-grid"></div>
+
+                </div>
+
+            </main>
+
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/notes.js') }}"></script>
+
+{% endblock %}

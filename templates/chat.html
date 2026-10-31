@@ -1,0 +1,2283 @@
+{% extends "base.html" %}
+
+{% block title %}聊天室｜Campus AI Hub{% endblock %}
+
+{% block content %}
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .chat-page {
+        min-height: calc(100vh - 20px);
+        background: #0f172a;
+        color: #e2e8f0;
+    }
+
+    .chat-header {
+        height: 70px;
+        border-bottom: 1px solid #334155;
+        background: #111827;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+    }
+
+    .chat-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .chat-header h1 {
+        margin: 0;
+        font-size: 22px;
+    }
+
+    .chat-header p {
+        margin: 3px 0 0;
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn {
+        border: none;
+        border-radius: 9px;
+        padding: 9px 13px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #334155;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    .chat-layout {
+        display: grid;
+        grid-template-columns: 310px 1fr;
+        height: calc(100vh - 90px);
+    }
+
+    /* ===============================
+       左側
+    ================================ */
+
+    .chat-sidebar {
+        background: #111827;
+        border-right: 1px solid #334155;
+        overflow-y: auto;
+    }
+
+    .sidebar-top {
+        padding: 18px;
+        border-bottom: 1px solid #334155;
+    }
+
+        .sidebar-top h2 {
+            margin: 0 0 12px;
+            font-size: 18px;
+        }
+
+    .chat-search {
+        width: 100%;
+        background: #0f172a;
+        border: 1px solid #475569;
+        color: white;
+        border-radius: 9px;
+        padding: 10px 12px;
+        outline: none;
+    }
+
+        .chat-search:focus {
+            border-color: #3b82f6;
+        }
+
+    .sidebar-link-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        margin-top: 10px;
+    }
+
+    .sidebar-link {
+        text-align: center;
+        text-decoration: none;
+        padding: 8px;
+        border-radius: 8px;
+        background: #1e293b;
+        color: #cbd5e1;
+        font-size: 12px;
+    }
+
+        .sidebar-link:hover {
+            background: #334155;
+            color: white;
+        }
+
+    .chat-section {
+        padding: 15px 12px 5px;
+    }
+
+    .chat-section-title {
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        padding: 0 7px 8px;
+    }
+
+    .chat-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+
+        .chat-item:hover {
+            background: #1e293b;
+        }
+
+        .chat-item.active {
+            background: #1d4ed8;
+        }
+
+    .chat-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+        .chat-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+    .chat-item-info {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .chat-item-name {
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .chat-item-sub {
+        color: #94a3b8;
+        font-size: 11px;
+        margin-top: 2px;
+    }
+
+    .chat-item.active .chat-item-sub {
+        color: #dbeafe;
+    }
+
+    .empty-list {
+        padding: 12px 8px;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    /* ===============================
+       右側
+    ================================ */
+
+    .chat-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        background: #0f172a;
+    }
+
+    .conversation-header {
+        min-height: 67px;
+        border-bottom: 1px solid #334155;
+        padding: 13px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #111827;
+    }
+
+    .conversation-info {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+
+    .conversation-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: #1e3a8a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .conversation-header h2 {
+        margin: 0;
+        font-size: 17px;
+    }
+
+    .conversation-header p {
+        margin: 3px 0 0;
+        color: #94a3b8;
+        font-size: 11px;
+    }
+
+    .message-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+    }
+
+    .welcome-chat {
+        margin: auto;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    .welcome-icon {
+        font-size: 55px;
+        margin-bottom: 15px;
+    }
+
+    .welcome-chat h3 {
+        color: white;
+        margin: 0 0 7px;
+    }
+
+    .message {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: #475569;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+    .message-body {
+        max-width: min(720px, 80%);
+    }
+
+    .message-meta {
+        color: #94a3b8;
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .message-content {
+        display: inline-block;
+        background: #1e293b;
+        padding: 9px 12px;
+        border-radius: 4px 13px 13px 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .message-file {
+        margin-top: 7px;
+    }
+
+        .message-file img {
+            max-width: 260px;
+            max-height: 260px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+    .file-link {
+        display: inline-block;
+        color: #93c5fd;
+        background: #1e293b;
+        padding: 8px 10px;
+        border-radius: 8px;
+        text-decoration: none;
+    }
+
+    .message-actions {
+        margin-top: 5px;
+        display: flex;
+        gap: 5px;
+    }
+
+    .mini-btn {
+        border: 0;
+        background: transparent;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+        .mini-btn:hover {
+            color: white;
+        }
+
+        .mini-btn.danger:hover {
+            color: #f87171;
+        }
+
+    /* ===============================
+       發送
+    ================================ */
+
+    .message-form {
+        border-top: 1px solid #334155;
+        background: #111827;
+        padding: 13px 18px;
+    }
+
+    .message-input-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 9px;
+    }
+
+    .message-input {
+        flex: 1;
+        min-height: 45px;
+        max-height: 120px;
+        resize: vertical;
+        border: 1px solid #475569;
+        background: #0f172a;
+        color: white;
+        padding: 11px 12px;
+        border-radius: 10px;
+        outline: none;
+    }
+
+        .message-input:focus {
+            border-color: #3b82f6;
+        }
+
+    .file-button {
+        width: 45px;
+        height: 45px;
+        border: 1px solid #475569;
+        border-radius: 10px;
+        background: #1e293b;
+        color: white;
+        cursor: pointer;
+        font-size: 18px;
+    }
+
+    .send-button {
+        min-width: 90px;
+        height: 45px;
+        border: 0;
+        border-radius: 10px;
+        background: #2563eb;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+        .send-button:hover {
+            background: #1d4ed8;
+        }
+
+    .selected-file {
+        display: none;
+        margin-bottom: 8px;
+        color: #93c5fd;
+        font-size: 12px;
+    }
+
+    #messageFile {
+        display: none;
+    }
+
+    /* ===============================
+       手機
+    ================================ */
+
+    @media (max-width: 800px) {
+
+        .chat-layout {
+            grid-template-columns: 240px 1fr;
+        }
+
+        .chat-header {
+            padding: 0 12px;
+        }
+    }
+
+    @media (max-width: 650px) {
+
+        .chat-header p {
+            display: none;
+        }
+
+        .chat-layout {
+            grid-template-columns: 105px 1fr;
+        }
+
+        .sidebar-top {
+            padding: 10px 7px;
+        }
+
+            .sidebar-top h2,
+            .chat-search,
+            .sidebar-link-row,
+            .chat-section-title {
+                display: none;
+            }
+
+        .chat-item {
+            flex-direction: column;
+            text-align: center;
+            padding: 8px 4px;
+        }
+
+        .chat-item-name {
+            font-size: 10px;
+            max-width: 90px;
+        }
+
+        .chat-item-sub {
+            display: none;
+        }
+
+        .message-list {
+            padding: 12px;
+        }
+
+        .send-button {
+            min-width: 58px;
+        }
+    }
+</style>
+
+
+<div class="chat-page">
+
+    <!-- 頂部 -->
+    <header class="chat-header">
+
+        <div class="chat-header-left">
+
+            <div style="font-size:27px;">
+                💬
+            </div>
+
+            <div>
+                <h1>聊天室</h1>
+                <p>
+                    私人聊天、群組與社團集中在這裡
+                </p>
+            </div>
+
+        </div>
+
+        <div class="header-actions">
+
+            <a href="/friends"
+               class="btn btn-secondary">
+                👥 好友
+            </a>
+
+            <a href="/communities/"
+               class="btn btn-secondary">
+                🏫 社團群組
+            </a>
+
+            <a href="/dashboard"
+               class="btn btn-secondary">
+                🏠 首頁
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <div class="chat-layout">
+
+        <!-- ==========================================
+             左側聊天列表
+        =========================================== -->
+
+        <aside class="chat-sidebar">
+
+            <div class="sidebar-top">
+
+                <h2>我的聊天</h2>
+
+                <input id="chatSearch"
+                       class="chat-search"
+                       type="text"
+                       placeholder="🔎 搜尋聊天...">
+
+                <div class="sidebar-link-row">
+
+                    <a href="/friends"
+                       class="sidebar-link">
+                        管理好友
+                    </a>
+
+                    <a href="/communities/"
+                       class="sidebar-link">
+                        管理社團
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- 私聊 -->
+
+            <section class="chat-section">
+
+                <div class="chat-section-title">
+                    👤 私人聊天
+                </div>
+
+                <div id="friendList"
+                     class="chat-list">
+                    <div class="empty-list">
+                        載入中...
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- 群組 -->
+
+            <section class="chat-section">
+
+                <div class="chat-section-title">
+                    👥 群組
+                </div>
+
+                <div id="groupList"
+                     class="chat-list">
+                    <div class="empty-list">
+                        載入中...
+                    </div>
+                </div>
+
+            </section>
+
+
+            <!-- 社團 -->
+
+            <section class="chat-section">
+
+                <div class="chat-section-title">
+                    🏫 社團
+                </div>
+
+                <div id="clubList"
+                     class="chat-list">
+                    <div class="empty-list">
+                        載入中...
+                    </div>
+                </div>
+
+            </section>
+
+        </aside>
+
+
+        <!-- ==========================================
+             右側聊天室
+        =========================================== -->
+
+        <main class="chat-main">
+
+            <div class="conversation-header">
+
+                <div class="conversation-info">
+
+                    <div id="conversationIcon"
+                         class="conversation-icon">
+                        💬
+                    </div>
+
+                    <div>
+
+                        <h2 id="chatTitle">
+                            請選擇聊天室
+                        </h2>
+
+                        <p id="chatSubtitle">
+                            從左側選擇好友、群組或社團
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div id="communityHeaderActions" style="display:none; gap:8px; flex-wrap:wrap;">
+                    <a id="communityDetailButton" class="btn btn-secondary" href="#">← 返回社團群組介紹</a>
+                </div>
+
+            </div>
+
+
+            <div id="messageList"
+                 class="message-list">
+
+                <div class="welcome-chat">
+
+                    <div class="welcome-icon">
+                        💬
+                    </div>
+
+                    <h3>
+                        Campus AI 聊天室
+                    </h3>
+
+                    <div>
+                        選擇左側聊天開始對話
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <form id="messageForm"
+                  class="message-form">
+
+                <div id="selectedFile"
+                     class="selected-file"></div>
+
+                <div class="message-input-row">
+
+                    <textarea id="messageContent"
+                              class="message-input"
+                              placeholder="輸入訊息..."></textarea>
+
+                    <input id="messageFile"
+                           type="file">
+
+                    <button type="button"
+                            class="file-button"
+                            onclick="document.getElementById('messageFile').click()"
+                            title="選擇附件">
+                        📎
+                    </button>
+
+                    <button type="submit"
+                            class="send-button">
+                        送出
+                    </button>
+
+                </div>
+
+            </form>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   狀態
+========================================================= */
+
+const currentUserId = {{ current_user.id }};
+
+let currentRoomId = null;
+let currentCommunityId = null;
+
+let currentChatType = null;
+
+let friends = [];
+let communities = [];
+
+
+/* =========================================================
+   基本工具
+========================================================= */
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+async function fetchJSON(url, options = {}) {
+
+    try {
+
+        const response =
+            await fetch(url, options);
+
+        const text =
+            await response.text();
+
+        let result;
+
+        try {
+
+            result =
+                JSON.parse(text);
+
+        } catch {
+
+            console.error(
+                "不是 JSON：",
+                url,
+                text
+            );
+
+            return {
+                success: false,
+                message: `伺服器回傳格式錯誤（HTTP ${response.status}）。請查看執行 python app.py 的黑色視窗。`
+            };
+        }
+
+        return result;
+
+    } catch (error) {
+
+        console.error(error);
+
+        return {
+            success: false,
+            message: "無法連線伺服器"
+        };
+    }
+}
+
+
+function avatarHTML(
+    name,
+    avatar,
+    cssClass = "chat-avatar"
+) {
+
+    if (avatar) {
+
+        return `
+            <div class="${cssClass}">
+                <img
+                    src="${escapeHTML(avatar)}"
+                    alt="頭像"
+                >
+            </div>
+        `;
+    }
+
+    const first =
+        String(name || "U")
+            .charAt(0);
+
+    return `
+        <div class="${cssClass}">
+            ${escapeHTML(first)}
+        </div>
+    `;
+}
+
+
+function clearActiveChat() {
+
+    document
+        .querySelectorAll(".chat-item")
+        .forEach(item => {
+            item.classList.remove("active");
+        });
+}
+
+
+function setActiveChat(element) {
+
+    clearActiveChat();
+
+    if (element) {
+        element.classList.add("active");
+    }
+}
+
+
+/* =========================================================
+   好友
+========================================================= */
+
+async function loadFriends() {
+
+    const result =
+        await fetchJSON(
+            "/api/chat/friends"
+        );
+
+    if (!result.success) {
+
+        document.getElementById(
+            "friendList"
+        ).innerHTML = `
+            <div class="empty-list">
+                ${escapeHTML(
+                    result.message ||
+                    "好友載入失敗"
+                )}
+            </div>
+        `;
+
+        return;
+    }
+
+    friends =
+        result.data || [];
+
+    renderFriends();
+}
+
+
+function renderFriends() {
+
+    const box =
+        document.getElementById(
+            "friendList"
+        );
+
+    const keyword =
+        document.getElementById(
+            "chatSearch"
+        ).value
+        .trim()
+        .toLowerCase();
+
+    const filtered =
+        friends.filter(user => {
+
+            const text = `
+                ${user.full_name || ""}
+                ${user.username || ""}
+                ${user.student_no || ""}
+            `.toLowerCase();
+
+            return text.includes(keyword);
+        });
+
+    box.innerHTML = "";
+
+    if (!filtered.length) {
+
+        box.innerHTML = `
+            <div class="empty-list">
+                目前沒有好友
+            </div>
+        `;
+
+        return;
+    }
+
+    filtered.forEach(user => {
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+        item.className =
+            "chat-item";
+
+        item.dataset.friendId =
+            user.id;
+
+        item.innerHTML = `
+
+            ${avatarHTML(
+                user.full_name ||
+                user.username,
+                user.avatar_url
+            )}
+
+            <div class="chat-item-info">
+
+                <div class="chat-item-name">
+                    ${escapeHTML(
+                        user.full_name ||
+                        user.username ||
+                        "好友"
+                    )}
+                </div>
+
+                <div class="chat-item-sub">
+                    私人聊天
+                </div>
+
+            </div>
+        `;
+
+        item.onclick = () =>
+            openPrivateChat(
+                user.id,
+                item
+            );
+
+        box.appendChild(item);
+    });
+}
+
+
+/* =========================================================
+   社團 / 群組
+========================================================= */
+
+async function loadCommunities() {
+
+    const result =
+        await fetchJSON(
+            "/api/chat/communities"
+        );
+
+    if (!result.success) {
+
+        document.getElementById(
+            "groupList"
+        ).innerHTML = `
+            <div class="empty-list">
+                載入失敗
+            </div>
+        `;
+
+        document.getElementById(
+            "clubList"
+        ).innerHTML = `
+            <div class="empty-list">
+                載入失敗
+            </div>
+        `;
+
+        return;
+    }
+
+    communities =
+        result.data || [];
+
+    renderCommunities();
+}
+
+
+function renderCommunities() {
+
+    const groupBox =
+        document.getElementById(
+            "groupList"
+        );
+
+    const clubBox =
+        document.getElementById(
+            "clubList"
+        );
+
+    const keyword =
+        document.getElementById(
+            "chatSearch"
+        ).value
+        .trim()
+        .toLowerCase();
+
+    groupBox.innerHTML = "";
+    clubBox.innerHTML = "";
+
+    const filtered =
+        communities.filter(item =>
+
+            String(
+                item.name || ""
+            )
+            .toLowerCase()
+            .includes(keyword)
+        );
+
+
+    const groups =
+        filtered.filter(item =>
+            item.community_type ===
+            "group"
+        );
+
+
+    const clubs =
+        filtered.filter(item =>
+            item.community_type ===
+            "club"
+        );
+
+
+    if (!groups.length) {
+
+        groupBox.innerHTML = `
+            <div class="empty-list">
+                尚未加入群組
+            </div>
+        `;
+
+    } else {
+
+        groups.forEach(
+            community => {
+
+                groupBox.appendChild(
+                    createCommunityItem(
+                        community,
+                        "👥"
+                    )
+                );
+            }
+        );
+    }
+
+
+    if (!clubs.length) {
+
+        clubBox.innerHTML = `
+            <div class="empty-list">
+                尚未加入社團
+            </div>
+        `;
+
+    } else {
+
+        clubs.forEach(
+            community => {
+
+                clubBox.appendChild(
+                    createCommunityItem(
+                        community,
+                        "🏫"
+                    )
+                );
+            }
+        );
+    }
+}
+
+
+function createCommunityItem(
+    community,
+    icon
+) {
+
+    const item =
+        document.createElement(
+            "div"
+        );
+
+    item.className =
+        "chat-item";
+
+    item.dataset.communityId =
+        community.id;
+
+    item.innerHTML = `
+
+        <div class="chat-avatar">
+            ${icon}
+        </div>
+
+        <div class="chat-item-info">
+
+            <div class="chat-item-name">
+                ${escapeHTML(
+                    community.name
+                )}
+            </div>
+
+            <div class="chat-item-sub">
+
+                ${
+                    community.community_type
+                    === "group"
+                        ? "群組聊天"
+                        : "社團聊天"
+                }
+
+            </div>
+
+        </div>
+    `;
+
+    item.onclick = () =>
+        openCommunity(
+            community.id,
+            community.name,
+            community.community_type,
+            item
+        );
+
+    return item;
+}
+
+
+/* =========================================================
+   開啟私聊
+========================================================= */
+
+async function openPrivateChat(
+    friendId,
+    element = null
+) {
+
+    const result =
+        await fetchJSON(
+            `/api/chat/friends/${friendId}/private-room`,
+            {
+                method: "POST"
+            }
+        );
+
+    if (!result.success) {
+
+        alert(
+            result.message ||
+            "無法開啟聊天室"
+        );
+
+        return;
+    }
+
+    currentRoomId =
+        result.data.room_id;
+
+    currentCommunityId =
+        null;
+
+    currentChatType =
+        "private";
+
+    document.getElementById("communityHeaderActions").style.display = "none";
+
+    setActiveChat(element);
+
+
+    document.getElementById(
+        "conversationIcon"
+    ).innerText = "👤";
+
+
+    document.getElementById(
+        "chatTitle"
+    ).innerText =
+        result.data.room_name ||
+        "私人聊天";
+
+
+    document.getElementById(
+        "chatSubtitle"
+    ).innerText =
+        "私人聊天";
+
+
+    await loadPrivateMessages();
+}
+
+
+/* =========================================================
+   開啟社團 / 群組
+========================================================= */
+
+async function openCommunity(
+    id,
+    name,
+    type,
+    element = null
+) {
+
+    currentRoomId =
+        null;
+
+    currentCommunityId =
+        id;
+
+    currentChatType =
+        "community";
+
+    const communityActions = document.getElementById("communityHeaderActions");
+    const communityDetailButton = document.getElementById("communityDetailButton");
+    communityDetailButton.href = `/communities/${id}`;
+    communityActions.style.display = "flex";
+
+    setActiveChat(element);
+
+
+    document.getElementById(
+        "conversationIcon"
+    ).innerText =
+        type === "group"
+            ? "👥"
+            : "🏫";
+
+
+    document.getElementById(
+        "chatTitle"
+    ).innerText =
+        name;
+
+
+    document.getElementById(
+        "chatSubtitle"
+    ).innerText =
+        type === "group"
+            ? "群組聊天"
+            : "社團聊天";
+
+
+    await loadCommunityMessages();
+}
+
+
+/* =========================================================
+   私聊訊息
+========================================================= */
+
+async function loadPrivateMessages() {
+
+    if (!currentRoomId) {
+        return;
+    }
+
+    const result =
+        await fetchJSON(
+            `/api/chat/rooms/${currentRoomId}/messages`
+        );
+
+    const box =
+        document.getElementById(
+            "messageList"
+        );
+
+    box.innerHTML = "";
+
+    if (!result.success) {
+
+        box.innerHTML = `
+            <div class="welcome-chat">
+                ${escapeHTML(
+                    result.message ||
+                    "訊息載入失敗"
+                )}
+            </div>
+        `;
+
+        return;
+    }
+
+    const messages =
+        result.data || [];
+
+    if (!messages.length) {
+
+        box.innerHTML = `
+            <div class="welcome-chat">
+
+                <div class="welcome-icon">
+                    👋
+                </div>
+
+                <h3>
+                    開始聊天吧
+                </h3>
+
+                <div>
+                    目前還沒有訊息
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+    messages.forEach(
+        message => {
+
+            renderPrivateMessage(
+                box,
+                message
+            );
+        }
+    );
+
+    box.scrollTop =
+        box.scrollHeight;
+}
+
+
+function renderPrivateMessage(
+    box,
+    message
+) {
+
+    const content =
+        escapeHTML(
+            message.content || ""
+        )
+        .replaceAll("\n", "<br>");
+
+
+    let fileHTML = "";
+
+    if (message.file_url) {
+
+        if (
+            message.message_type ===
+            "image"
+        ) {
+
+            fileHTML = `
+                <div class="message-file">
+                    <a
+                        href="${escapeHTML(
+                            message.file_url
+                        )}"
+                        target="_blank"
+                    >
+                        <img
+                            src="${escapeHTML(
+                                message.file_url
+                            )}"
+                            alt="圖片"
+                        >
+                    </a>
+                </div>
+            `;
+
+        } else {
+
+            fileHTML = `
+                <div class="message-file">
+
+                    <a
+                        class="file-link"
+                        href="${escapeHTML(
+                            message.file_url
+                        )}"
+                        target="_blank"
+                    >
+                        📎
+                        ${escapeHTML(
+                            message.file_name ||
+                            "下載附件"
+                        )}
+                    </a>
+
+                </div>
+            `;
+        }
+    }
+
+
+    let actions = "";
+
+    if (
+        Number(message.sender_id) ===
+        Number(currentUserId)
+    ) {
+
+        const safeContent =
+            JSON.stringify(
+                message.content || ""
+            );
+
+        actions = `
+            <div class="message-actions">
+
+                <button
+                    type="button"
+                    class="mini-btn"
+                    onclick='editPrivateMessage(
+                        ${message.id},
+                        ${safeContent}
+                    )'
+                >
+                    修改
+                </button>
+
+                <button
+                    type="button"
+                    class="mini-btn danger"
+                    onclick="deletePrivateMessage(
+                        ${message.id}
+                    )"
+                >
+                    刪除
+                </button>
+
+            </div>
+        `;
+    }
+
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+    row.className =
+        "message";
+
+    row.innerHTML = `
+
+        ${avatarHTML(
+            message.sender_name ||
+            "U",
+            message.sender_avatar,
+            "message-avatar"
+        )}
+
+        <div class="message-body">
+
+            <div class="message-meta">
+
+                ${escapeHTML(
+                    message.sender_name ||
+                    "使用者"
+                )}
+
+                ・
+
+                ${escapeHTML(
+                    message.created_at ||
+                    ""
+                )}
+
+            </div>
+
+            ${
+                content
+                    ? `
+                        <div class="message-content">
+                            ${content}
+                        </div>
+                    `
+                    : ""
+            }
+
+            ${fileHTML}
+
+            ${actions}
+
+        </div>
+    `;
+
+    box.appendChild(row);
+}
+
+
+/* =========================================================
+   社團 / 群組訊息
+========================================================= */
+
+async function loadCommunityMessages() {
+
+    if (!currentCommunityId) {
+        return;
+    }
+
+    const result =
+        await fetchJSON(
+            `/api/chat/communities/${currentCommunityId}/messages`
+        );
+
+    const box =
+        document.getElementById(
+            "messageList"
+        );
+
+    box.innerHTML = "";
+
+    if (!result.success) {
+
+        box.innerHTML = `
+            <div class="welcome-chat">
+                ${escapeHTML(
+                    result.message ||
+                    "訊息載入失敗"
+                )}
+            </div>
+        `;
+
+        return;
+    }
+
+    const messages =
+        result.data || [];
+
+    if (!messages.length) {
+
+        box.innerHTML = `
+            <div class="welcome-chat">
+
+                <div class="welcome-icon">
+                    👋
+                </div>
+
+                <h3>
+                    開始聊天吧
+                </h3>
+
+                <div>
+                    目前還沒有訊息
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    messages.forEach(
+        message => {
+
+            renderCommunityMessage(
+                box,
+                message
+            );
+        }
+    );
+
+
+    box.scrollTop =
+        box.scrollHeight;
+}
+
+
+function renderCommunityMessage(
+    box,
+    message
+) {
+
+    const content =
+        escapeHTML(
+            message.content || ""
+        )
+        .replaceAll("\n", "<br>");
+
+
+    let fileHTML = "";
+
+    if (message.file_url) {
+
+        if (
+            message.message_type ===
+            "image"
+        ) {
+
+            fileHTML = `
+                <div class="message-file">
+
+                    <a
+                        href="${escapeHTML(
+                            message.file_url
+                        )}"
+                        target="_blank"
+                    >
+
+                        <img
+                            src="${escapeHTML(
+                                message.file_url
+                            )}"
+                            alt="圖片"
+                        >
+
+                    </a>
+
+                </div>
+            `;
+
+        } else {
+
+            fileHTML = `
+                <div class="message-file">
+
+                    <a
+                        class="file-link"
+
+                        href="/communities/${
+                            currentCommunityId
+                        }/messages/${
+                            message.id
+                        }/download"
+                    >
+                        📎
+                        ${escapeHTML(
+                            message.file_name ||
+                            "下載附件"
+                        )}
+                    </a>
+
+                </div>
+            `;
+        }
+    }
+
+
+    let actions = "";
+
+    if (
+        Number(message.sender_id) ===
+        Number(currentUserId)
+    ) {
+
+        const safeContent = JSON.stringify(message.content || "");
+
+        actions = `
+            <div class="message-actions">
+
+                <button
+                    type="button"
+                    class="mini-btn"
+                    onclick='editCommunityMessage(${message.id}, ${safeContent})'
+                >
+                    修改
+                </button>
+
+                <button
+                    type="button"
+                    class="mini-btn danger"
+                    onclick="recallCommunityMessage(${message.id})"
+                >
+                    收回
+                </button>
+
+            </div>
+        `;
+    }
+
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+    row.className =
+        "message";
+
+    row.innerHTML = `
+
+        ${avatarHTML(
+            message.sender_name ||
+            "U",
+            message.sender_avatar,
+            "message-avatar"
+        )}
+
+        <div class="message-body">
+
+            <div class="message-meta">
+
+                ${escapeHTML(
+                    message.sender_name ||
+                    "使用者"
+                )}
+
+                ・
+
+                ${escapeHTML(
+                    message.created_at ||
+                    ""
+                )}
+
+            </div>
+
+            ${
+                content
+                    ? `
+                        <div class="message-content">
+                            ${content}
+                        </div>
+                    `
+                    : ""
+            }
+
+            ${fileHTML}
+
+            ${actions}
+
+        </div>
+    `;
+
+    box.appendChild(row);
+}
+
+
+/* =========================================================
+   私聊修改 / 刪除
+========================================================= */
+
+async function editPrivateMessage(
+    messageId,
+    oldContent
+) {
+
+    const content =
+        prompt(
+            "修改訊息內容",
+            oldContent || ""
+        );
+
+    if (content === null) {
+        return;
+    }
+
+    if (!content.trim()) {
+
+        alert(
+            "訊息不可為空"
+        );
+
+        return;
+    }
+
+    const result =
+        await fetchJSON(
+            `/api/chat/messages/${messageId}/edit`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    content:
+                        content.trim()
+                })
+            }
+        );
+
+    alert(
+        result.message ||
+        "處理完成"
+    );
+
+    if (result.success) {
+        loadPrivateMessages();
+    }
+}
+
+
+async function deletePrivateMessage(
+    messageId
+) {
+
+    if (
+        !confirm(
+            "確定要刪除這則訊息嗎？"
+        )
+    ) {
+        return;
+    }
+
+    const result =
+        await fetchJSON(
+            `/api/chat/messages/${messageId}/delete`,
+            {
+                method: "POST"
+            }
+        );
+
+    alert(
+        result.message ||
+        "處理完成"
+    );
+
+    if (result.success) {
+        loadPrivateMessages();
+    }
+}
+
+
+/* =========================================================
+   社團訊息收回
+========================================================= */
+
+async function editCommunityMessage(messageId, oldContent) {
+
+    const content = prompt("修改訊息內容", oldContent || "");
+
+    if (content === null) return;
+
+    if (!content.trim()) {
+        alert("訊息不可為空");
+        return;
+    }
+
+    const result = await fetchJSON(
+        `/api/chat/communities/${currentCommunityId}/messages/${messageId}/edit`,
+        {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({content: content.trim()})
+        }
+    );
+
+    alert(result.message || "處理完成");
+
+    if (result.success) {
+        await loadCommunityMessages();
+    }
+}
+
+
+async function recallCommunityMessage(
+    messageId
+) {
+
+    if (
+        !confirm(
+            "確定要收回這則訊息嗎？"
+        )
+    ) {
+        return;
+    }
+
+    const result =
+        await fetchJSON(
+            `/api/chat/communities/${currentCommunityId}/messages/${messageId}/delete`,
+            {
+                method: "DELETE"
+            }
+        );
+
+    alert(
+        result.message ||
+        "處理完成"
+    );
+
+    if (result.success) {
+        loadCommunityMessages();
+    }
+}
+
+
+/* =========================================================
+   傳送訊息
+========================================================= */
+
+document
+    .getElementById(
+        "messageForm"
+    )
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const content =
+                document.getElementById(
+                    "messageContent"
+                )
+                .value
+                .trim();
+
+
+            const fileInput =
+                document.getElementById(
+                    "messageFile"
+                );
+
+
+            const file =
+                fileInput.files[0];
+
+
+            if (
+                !currentChatType
+            ) {
+
+                alert(
+                    "請先選擇聊天室"
+                );
+
+                return;
+            }
+
+
+            if (
+                !content &&
+                !file
+            ) {
+
+                alert(
+                    "請輸入訊息或選擇附件"
+                );
+
+                return;
+            }
+
+
+            /* ==========================
+               私聊
+            ========================== */
+
+            if (
+                currentChatType ===
+                "private"
+            ) {
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    "content",
+                    content
+                );
+
+
+                if (file) {
+
+                    formData.append(
+                        "file",
+                        file
+                    );
+                }
+
+
+                const result =
+                    await fetchJSON(
+                        `/api/chat/rooms/${currentRoomId}/messages`,
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                if (!result.success) {
+
+                    alert(
+                        result.message ||
+                        "傳送失敗"
+                    );
+
+                    return;
+                }
+
+
+                clearMessageForm();
+
+                await loadPrivateMessages();
+
+                return;
+            }
+
+
+            /* ==========================
+               社團 / 群組
+            ========================== */
+
+            if (
+                currentChatType ===
+                "community"
+            ) {
+
+                const formData = new FormData();
+                formData.append("content", content);
+
+                if (file) {
+                    formData.append("file", file);
+                }
+
+                const result = await fetchJSON(
+                    `/api/chat/communities/${currentCommunityId}/messages`,
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+                if (!result.success) {
+                    alert(result.message || "訊息或附件傳送失敗");
+                    return;
+                }
+
+                clearMessageForm();
+                await loadCommunityMessages();
+            }
+        }
+    );
+
+
+function clearMessageForm() {
+
+    document.getElementById(
+        "messageContent"
+    ).value = "";
+
+    document.getElementById(
+        "messageFile"
+    ).value = "";
+
+    document.getElementById(
+        "selectedFile"
+    ).style.display = "none";
+}
+
+
+/* =========================================================
+   附件顯示
+========================================================= */
+
+document
+    .getElementById(
+        "messageFile"
+    )
+    .addEventListener(
+        "change",
+        function() {
+
+            const box =
+                document.getElementById(
+                    "selectedFile"
+                );
+
+            if (
+                this.files.length
+            ) {
+
+                box.textContent =
+                    "📎 " +
+                    this.files[0].name;
+
+                box.style.display =
+                    "block";
+
+            } else {
+
+                box.style.display =
+                    "none";
+            }
+        }
+    );
+
+
+/* =========================================================
+   搜尋聊天
+========================================================= */
+
+document
+    .getElementById(
+        "chatSearch"
+    )
+    .addEventListener(
+        "input",
+        function() {
+
+            renderFriends();
+            renderCommunities();
+        }
+    );
+
+
+/* =========================================================
+   URL 自動開啟
+
+   /chat?friend_id=3
+   /chat?community_id=5
+========================================================= */
+
+async function openFromURL() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+
+    const friendId =
+        params.get(
+            "friend_id"
+        );
+
+
+    const communityId =
+        params.get(
+            "community_id"
+        );
+
+
+    if (friendId) {
+
+        const friend =
+            friends.find(
+                item =>
+                    Number(item.id) ===
+                    Number(friendId)
+            );
+
+
+        if (friend) {
+
+            const element =
+                document.querySelector(
+                    `[data-friend-id="${friendId}"]`
+                );
+
+
+            await openPrivateChat(
+                friendId,
+                element
+            );
+
+            return;
+        }
+    }
+
+
+    if (communityId) {
+
+        const community =
+            communities.find(
+                item =>
+                    Number(item.id) ===
+                    Number(communityId)
+            );
+
+
+        if (community) {
+
+            const element =
+                document.querySelector(
+                    `[data-community-id="${communityId}"]`
+                );
+
+
+            await openCommunity(
+                community.id,
+                community.name,
+                community.community_type,
+                element
+            );
+        }
+    }
+}
+
+
+/* =========================================================
+   Enter 傳送
+========================================================= */
+
+document
+    .getElementById(
+        "messageContent"
+    )
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                document
+                    .getElementById(
+                        "messageForm"
+                    )
+                    .requestSubmit();
+            }
+        }
+    );
+
+
+/* =========================================================
+   初始化
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async function() {
+
+        await Promise.all([
+            loadFriends(),
+            loadCommunities()
+        ]);
+
+        await openFromURL();
+    }
+);
+
+</script>
+
+{% endblock %}

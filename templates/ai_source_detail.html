@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{{ kind }}｜{{ item.title }}{% endblock %}
+{% block content %}
+<style>.ai-source{max-width:850px;margin:30px auto;padding:24px;border-radius:18px;background:#1e293b;color:#f8fafc}.ai-source a{color:#93c5fd}.ai-source .body{white-space:pre-wrap;line-height:1.85;overflow-wrap:anywhere}.ai-source h1{color:#fff}</style>
+<main class="ai-source">
+  <a href="{{ url_for('index') }}">← 返回首頁</a>
+  <h1>{{ kind }}：{{ item.title }}</h1>
+  <div class="body">{{ item.content }}</div>
+  <p><a href="{{ url_for('ai_api_v2.ai_source_detail', source_type='post' if kind == '公告' else 'note', source_id=item.id) }}">目前資料來源連結</a></p>
+  <button type="button" onclick="history.back()">← 返回上一頁</button>
+</main>
+{% endblock %}

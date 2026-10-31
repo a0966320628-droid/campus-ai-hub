@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }}｜Campus AI{% endblock %}
+{% block content %}
+<style>
+.search-detail{max-width:850px;margin:32px auto;padding:0 18px 40px;color:#f8fafc}
+.search-detail .detail-panel{background:#172338;border:1px solid #334765;border-radius:18px;padding:26px}
+.search-detail h1{color:#fff!important;font-size:clamp(23px,4vw,32px);line-height:1.45;overflow-wrap:anywhere}
+.search-detail .detail-meta{color:#cbd5e1!important;margin:12px 0 24px}
+.search-detail .detail-content{color:#e2e8f0!important;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85}
+.search-detail a{color:#bfdbfe!important}
+.search-detail .detail-attachment{display:block;padding:10px 0}
+@media(max-width:600px){.search-detail{margin:15px auto}.search-detail .detail-panel{padding:18px}}
+</style>
+<div class="search-detail">
+  <p><a href="{{ request.referrer if request.referrer and request.referrer.startswith(request.host_url) else url_for('global_search') }}">← 返回搜尋</a></p>
+  <article class="detail-panel">
+    <p class="detail-meta">{{ '📢 公告' if kind == 'post' else '📝 我的筆記' }}</p>
+    <h1>{{ item.title }}</h1>
+    <p class="detail-meta">{{ item.category or '一般資訊' }}{% if item.created_at %} · {{ item.created_at.strftime('%Y-%m-%d %H:%M') }}{% endif %}</p>
+    <div class="detail-content">{{ item.content or '沒有內容' }}</div>
+    {% if item.attachments %}
+    <hr style="border:0;border-top:1px solid #334765;margin:24px 0">
+    <h2 style="color:#fff">附件</h2>
+    {% for attachment in item.attachments %}
+      {% if kind == 'post' %}
+        <a class="detail-attachment" href="{{ url_for('announcement.download_attachment', post_id=item.id, attachment_id=attachment.id) }}">📎 {{ attachment.original_name }}（下載）</a>
+      {% else %}
+        <span class="detail-attachment" style="color:#cbd5e1">📎 {{ attachment.original_name }}（請至我的筆記頁面查看附件）</span>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </article>
+</div>
+{% endblock %}

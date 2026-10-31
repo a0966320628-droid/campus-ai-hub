@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+{% block title %}語音與視訊會議{% endblock %}
+{% block content %}
+<style>
+    .meet-page {
+        min-height: calc(100vh - 70px);
+        background: #020617;
+        color: #e2e8f0;
+        padding: 34px 0 70px
+    }
+
+    .meet-wrap {
+        width: min(1180px,92%);
+        margin: auto
+    }
+
+    .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-bottom: 24px
+    }
+
+        .top h1 {
+            margin: 0;
+            color: #fff;
+            font-size: 30px
+        }
+
+        .top p {
+            margin: 7px 0 0;
+            color: #94a3b8
+        }
+
+    .back {
+        padding: 10px 14px;
+        background: #172033;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        text-decoration: none
+    }
+
+    .layout {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 20px
+    }
+
+    .panel {
+        background: #0f172a;
+        border: 1px solid #263449;
+        border-radius: 20px;
+        padding: 20px
+    }
+
+        .panel h2 {
+            margin: 0 0 16px;
+            color: #fff;
+            font-size: 18px
+        }
+
+    .field {
+        margin-bottom: 14px
+    }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 700
+        }
+
+        .field input, .field select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 11px;
+            border: 1px solid #334155;
+            background: #0b1220;
+            color: #fff
+        }
+
+    .create, .join {
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 14px;
+        font-weight: 700;
+        cursor: pointer
+    }
+
+    .create {
+        width: 100%;
+        background: #2563eb;
+        color: white
+    }
+
+    .join {
+        background: #e2e8f0;
+        color: #0f172a
+    }
+
+    .list {
+        display: grid;
+        gap: 12px
+    }
+
+    .cardx {
+        background: #0b1220;
+        border: 1px solid #263449;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        align-items: center
+    }
+
+        .cardx h3 {
+            margin: 0 0 7px;
+            color: white
+        }
+
+    .meta {
+        color: #94a3b8;
+        font-size: 13px
+    }
+
+    .tag {
+        display: inline-block;
+        font-size: 11px;
+        padding: 5px 8px;
+        border: 1px solid #334155;
+        border-radius: 999px;
+        color: #cbd5e1;
+        margin: 7px 4px 0 0
+    }
+
+    .empty {
+        text-align: center;
+        padding: 35px;
+        color: #94a3b8;
+        border: 1px dashed #334155;
+        border-radius: 14px
+    }
+
+    @media(max-width:850px) {
+        .layout {
+            grid-template-columns: 1fr
+        }
+
+        .cardx {
+            align-items: flex-start;
+            flex-direction: column
+        }
+
+        .join {
+            width: 100%
+        }
+    }
+</style>
+<div class="meet-page">
+    <div class="meet-wrap">
+        <div class="top"><div><h1>🎥 語音與視訊會議</h1><p>建立會議後，先確認自己的裝置再正式加入。</p></div><a class="back" href="/dashboard">← 返回首頁</a></div>
+        <div class="layout">
+            <section class="panel">
+                <h2>＋ 建立新會議</h2><form id="meetingForm">
+                    <div class="field"><label>會議名稱</label><input name="title" maxlength="100" placeholder="例如：專題討論" required></div>
+                    <div class="field"><label>會議類型</label><select name="meeting_type"><option value="video">🎥 視訊會議</option><option value="audio">🎤 語音會議</option></select></div>
+                    <div class="field"><label>會議密碼（選填）</label><input type="password" name="password" placeholder="不設定即可直接加入"></div>
+                    <button class="create" type="submit">建立會議</button>
+                </form>
+            </section>
+            <section class="panel">
+                <h2>目前可加入的會議</h2><div class="list">
+                    {% for meeting in meetings %}
+                    <div class="cardx">
+                        <div>
+                            <h3>{{ meeting.title }}</h3><div class="meta">代碼：{{ meeting.meeting_code }}</div>
+                            <span class="tag">{{ "🎥 視訊" if meeting.meeting_type == "video" else "🎤 語音" }}</span>{% if meeting.require_password %}<span class="tag">🔒 需要密碼</span>{% endif %}<span class="tag">{{ meeting.status }}</span>
+                        </div>
+                        <button class="join" data-id="{{ meeting.id }}" data-lock="{{ '1' if meeting.require_password else '0' }}" data-owner="{{ '1' if current_user.id == meeting.created_by else '0' }}">加入會議</button>
+                    </div>
+                    {% else %}<div class="empty">目前沒有進行中的會議</div>{% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+<script>
+    async function readResponse(response) {
+        const text = await response.text();
+
+        console.log("HTTP Status:", response.status);
+        console.log("Server Response:", text);
+
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            throw new Error(
+                "伺服器沒有回傳 JSON。\n\n" +
+                "HTTP 狀態：" + response.status + "\n\n" +
+                "請查看執行 python app.py 的 CMD，裡面會有真正的錯誤。"
+            );
+        }
+    }
+
+
+    // ========================================
+    // 建立會議
+    // ========================================
+
+    document
+        .getElementById("meetingForm")
+        .addEventListener("submit", async function (event) {
+
+            event.preventDefault();
+
+            const button =
+                this.querySelector('button[type="submit"]');
+
+            button.disabled = true;
+            button.textContent = "建立中...";
+
+            try {
+
+                const response = await fetch(
+                    "/meetings/create",
+                    {
+                        method: "POST",
+                        body: new FormData(this)
+                    }
+                );
+
+                const data =
+                    await readResponse(response);
+
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.message || "建立會議失敗"
+                    );
+                }
+
+                location.href =
+                    `/meetings/${data.meeting_id}`;
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(error.message);
+
+                button.disabled = false;
+                button.textContent = "建立會議";
+            }
+        });
+
+
+    // ========================================
+    // 加入會議
+    // ========================================
+
+    document
+        .querySelectorAll(".join")
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                async function () {
+
+                    const meetingId =
+                        this.dataset.id;
+
+                    const needPassword =
+                        this.dataset.lock === "1";
+
+                    const isOwner =
+                        this.dataset.owner === "1";
+
+                    let password = "";
+
+                    if (
+                        needPassword &&
+                        !isOwner
+                    ) {
+
+                        password =
+                            prompt(
+                                "請輸入會議密碼："
+                            ) || "";
+
+                        if (!password) {
+                            return;
+                        }
+                    }
+
+                    this.disabled = true;
+                    this.textContent =
+                        "確認中...";
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `/meetings/${meetingId}/join`,
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+                                            password:
+                                                password
+                                        })
+                                }
+                            );
+
+                        const data =
+                            await readResponse(
+                                response
+                            );
+
+                        if (
+                            !response.ok ||
+                            !data.success
+                        ) {
+
+                            throw new Error(
+                                data.message ||
+                                "加入會議失敗"
+                            );
+                        }
+
+                        location.href =
+                            `/meetings/${meetingId}`;
+
+                    } catch (error) {
+
+                        console.error(error);
+
+                        alert(error.message);
+
+                        this.disabled = false;
+                        this.textContent =
+                            "加入會議";
+                    }
+                }
+            );
+        });
+</script>
+{% endblock %}

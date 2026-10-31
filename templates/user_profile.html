@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% block title %}
+{{ user.full_name }}｜個人資訊
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .profile-view-page {
+        min-height: 100vh;
+        background:
+            linear-gradient(
+                135deg,
+                #020617,
+                #0f172a,
+                #111827
+            );
+        color: #e2e8f0;
+        padding: 30px 0;
+    }
+
+    .profile-view-container {
+        width: min(850px, 92%);
+        margin: 0 auto;
+    }
+
+    .profile-card {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 20px;
+        padding: 25px;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #3b82f6;
+        background: #334155;
+    }
+
+    .avatar-placeholder {
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 35px;
+        color: white;
+        font-weight: bold;
+    }
+
+    .profile-name {
+        margin-top: 12px;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .username {
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+
+    .relation-badge {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #1e3a8a;
+        color: #bfdbfe;
+        font-size: 12px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .info-box {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 13px;
+    }
+
+    .info-label {
+        color: #64748b;
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        color: #e2e8f0;
+        line-height: 1.6;
+    }
+
+    .private-box {
+        text-align: center;
+        padding: 50px 20px;
+        background: #111827;
+        border-radius: 15px;
+        border: 1px dashed #475569;
+    }
+
+    .private-icon {
+        font-size: 45px;
+        margin-bottom: 15px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .btn {
+        text-decoration: none;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #334155;
+        color: white;
+    }
+
+    @media (max-width: 650px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+
+<div class="profile-view-page">
+
+    <div class="profile-view-container">
+
+        <div class="profile-card">
+
+            <div class="profile-header">
+
+                {% if user.avatar_url %}
+
+                    <img
+                        class="avatar"
+                        src="{{ user.avatar_url }}"
+                        alt="頭像"
+                    >
+
+                {% else %}
+
+                    <div
+                        class="
+                            avatar
+                            avatar-placeholder
+                        "
+                    >
+                        {{
+                            (
+                                user.full_name
+                                or user.username
+                                or "U"
+                            )[0]
+                        }}
+                    </div>
+
+                {% endif %}
+
+
+                <div class="profile-name">
+                    {{ user.full_name }}
+                </div>
+
+                <div class="username">
+                    @{{ user.username }}
+                </div>
+
+
+                {% if relationship == "friend" %}
+
+                    <span class="relation-badge">
+                        👥 好友
+                    </span>
+
+                {% elif relationship == "pending" %}
+
+                    <span class="relation-badge">
+                        📩 好友邀請中
+                    </span>
+
+                {% elif relationship == "self" %}
+
+                    <span class="relation-badge">
+                        👤 我的個人資料
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            {% if can_view %}
+
+            <div class="info-grid">
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        學號
+                    </div>
+
+                    <div class="info-value">
+                        {{
+                            user.student_no
+                            or "未設定"
+                        }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        科系
+                    </div>
+
+                    <div class="info-value">
+
+                        {% if user.department %}
+                            {{ user.department.name }}
+                        {% else %}
+                            未設定
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        年級
+                    </div>
+
+                    <div class="info-value">
+                        {{
+                            user.grade_level
+                            or "未設定"
+                        }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Email
+                    </div>
+
+                    <div class="info-value">
+                        {{
+                            user.email
+                            or "未設定"
+                        }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        興趣
+                    </div>
+
+                    <div class="info-value">
+                        {{
+                            user.interests
+                            or "未設定"
+                        }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        個人簡介
+                    </div>
+
+                    <div class="info-value">
+                        {{
+                            user.bio
+                            or "尚未填寫"
+                        }}
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <div class="private-box">
+
+                <div class="private-icon">
+                    🔒
+                </div>
+
+                <h2>
+                    此使用者沒有公開個人資訊
+                </h2>
+
+                <p>
+                    對方目前的隱私設定不允許你查看完整資料。
+                </p>
+
+            </div>
+
+            {% endif %}
+
+
+            <div class="actions">
+
+                <a
+                    href="/friends"
+                    class="btn btn-secondary"
+                >
+                    ← 返回好友管理
+                </a>
+
+
+                {% if relationship == "friend" %}
+
+                <a
+                    href="/chat?friend_id={{ user.id }}"
+                    class="btn btn-primary"
+                >
+                    💬 開始聊天
+                </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

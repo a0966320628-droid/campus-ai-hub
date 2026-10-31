@@ -1,0 +1,1126 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ community.name }}｜Campus AI Hub
+{% endblock %}
+
+{% block content %}
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .community-page {
+        min-height: 100vh;
+        background: radial-gradient( circle at top left, rgba(37, 99, 235, .15), transparent 35% ), linear-gradient( 135deg, #020617, #0f172a 55%, #111827 );
+        color: #e2e8f0;
+        padding-bottom: 50px;
+    }
+
+    .community-header {
+        background: rgba(15, 23, 42, .96);
+        border-bottom: 1px solid #334155;
+        padding: 18px 0;
+    }
+
+    .community-header-inner,
+    .community-container {
+        width: min(1300px, 94%);
+        margin: 0 auto;
+    }
+
+    .community-header-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .community-title h1 {
+        margin: 0;
+        color: white;
+        font-size: 25px;
+    }
+
+    .community-title p {
+        margin: 6px 0 0;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .community-container {
+        padding-top: 22px;
+    }
+
+    .community-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 18px;
+        align-items: start;
+    }
+
+    .panel {
+        background: rgba(15, 23, 42, .96);
+        border: 1px solid #334155;
+        border-radius: 18px;
+        padding: 18px;
+        margin-bottom: 18px;
+    }
+
+        .panel h2 {
+            margin-top: 0;
+            color: white;
+            font-size: 19px;
+        }
+
+    .btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #334155;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+    /* =====================================================
+       社群資訊
+    ===================================================== */
+
+    .community-info {
+        display: grid;
+        gap: 12px;
+    }
+
+    .info-row {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 13px;
+    }
+
+    .info-label {
+        color: #64748b;
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        color: #e2e8f0;
+        line-height: 1.6;
+        font-size: 13px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+    }
+
+    .badge-blue {
+        background: #1e3a8a;
+        color: #bfdbfe;
+    }
+
+    .badge-green {
+        background: #14532d;
+        color: #bbf7d0;
+    }
+
+    .badge-yellow {
+        background: #78350f;
+        color: #fde68a;
+    }
+
+    /* =====================================================
+       統一聊天室入口
+    ===================================================== */
+
+    .chat-entry {
+        background: linear-gradient( 135deg, rgba(37, 99, 235, .15), rgba(15, 23, 42, .95) );
+        border: 1px solid #334155;
+        border-radius: 15px;
+        padding: 22px;
+    }
+
+    .chat-entry-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 8px;
+    }
+
+    .chat-entry-description {
+        color: #94a3b8;
+        line-height: 1.7;
+        font-size: 13px;
+        margin-bottom: 18px;
+    }
+
+    .chat-entry-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* =====================================================
+       成員 / 審核
+    ===================================================== */
+
+    .member-list,
+    .request-list {
+        display: grid;
+        gap: 8px;
+    }
+
+    .member-item,
+    .request-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 11px;
+        padding: 10px;
+    }
+
+    .member-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #334155;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+
+    .member-name {
+        color: white;
+        font-size: 13px;
+    }
+
+    .member-role {
+        color: #94a3b8;
+        font-size: 10px;
+        margin-top: 3px;
+    }
+
+    .request-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .request-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 9px;
+        flex-wrap: wrap;
+    }
+
+    .empty-state {
+        padding: 25px 10px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+    @media (max-width: 900px) {
+        .community-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .community-header-inner {
+            align-items: stretch;
+        }
+
+            .community-header-inner > div:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .community-header-inner .btn {
+                flex: 1;
+            }
+
+        .chat-entry-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+            .chat-entry-actions .btn {
+                width: 100%;
+            }
+    }
+</style>
+
+
+<div class="community-page">
+
+    <!-- =====================================================
+         頂部
+    ====================================================== -->
+
+    <header class="community-header">
+
+        <div class="community-header-inner">
+
+            <div class="community-title">
+
+                <h1>
+                    {% if community.community_type == "club" %}
+                    🏫
+                    {% elif community.community_type == "group" %}
+                    👥
+                    {% else %}
+                    💬
+                    {% endif %}
+
+                    {{ community.name }}
+                </h1>
+
+                <p>
+
+                    {% if community.community_type == "club" %}
+                    校園社團
+
+                    {% elif community.community_type == "group" %}
+                    專題／群組
+
+                    {% else %}
+                    討論論壇
+                    {% endif %}
+
+                    ・
+
+                    {% if is_creator %}
+                    👑 你是建立者
+
+                    {% elif membership %}
+                    已加入
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+
+            <div>
+
+                {% if is_creator or membership %}
+
+                <a class="btn btn-primary"
+                   href="/chat?community_id={{ community.id }}">
+                    💬 進入聊天室
+                </a>
+
+                {% endif %}
+
+
+                <a class="btn btn-secondary"
+                   href="/communities/">
+                    ← 返回社群
+                </a>
+
+
+                <a class="btn btn-secondary"
+                   href="/dashboard">
+                    🏠 首頁
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         主要內容
+    ====================================================== -->
+
+    <main class="community-container">
+
+        <div class="community-layout">
+
+
+            <!-- =====================================================
+                 左側
+            ====================================================== -->
+
+            <section>
+
+
+                <!-- =================================================
+                     社群資訊
+                ================================================== -->
+
+                <div class="panel">
+
+                    <h2>📌 社群資訊</h2>
+
+                    <div class="community-info">
+
+
+                        <div class="info-row">
+
+                            <div class="info-label">
+                                社群名稱
+                            </div>
+
+                            <div class="info-value">
+                                {{ community.name }}
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <div class="info-label">
+                                社群說明
+                            </div>
+
+                            <div class="info-value">
+
+                                {% if community.description %}
+
+                                {{ community.description }}
+
+                                {% else %}
+
+                                建立者尚未填寫社群說明。
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <div class="info-label">
+                                社群類型
+                            </div>
+
+                            <div class="info-value">
+
+                                {% if community.community_type == "club" %}
+
+                                <span class="badge badge-blue">
+                                    🏫 社團
+                                </span>
+
+                                {% elif community.community_type == "group" %}
+
+                                <span class="badge badge-green">
+                                    👥 群組
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge badge-yellow">
+                                    💬 論壇
+                                </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="info-row">
+
+                            <div class="info-label">
+                                加入方式
+                            </div>
+
+                            <div class="info-value">
+
+                                {% if community.join_mode == "open" %}
+
+                                公開加入
+
+                                {% elif community.join_mode == "approval" %}
+
+                                需要建立者審核
+
+                                {% elif community.join_mode == "password" %}
+
+                                需要密碼
+
+                                {% elif community.join_mode == "password_approval" %}
+
+                                需要密碼與建立者審核
+
+                                {% else %}
+
+                                公開加入
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     統一聊天室
+                ================================================== -->
+                {% if is_creator or membership %}
+
+                <div class="panel">
+
+                    <h2>💬 聊天室</h2>
+
+                    <div class="chat-entry">
+
+                        <div class="chat-entry-title">
+
+                            {% if community.community_type == "club" %}
+                            🏫 {{ community.name }} 社團聊天室
+
+                            {% elif community.community_type == "group" %}
+                            👥 {{ community.name }} 群組聊天室
+
+                            {% else %}
+                            💬 {{ community.name }} 聊天室
+                            {% endif %}
+
+                        </div>
+
+
+
+
+
+                        <div class="chat-entry-actions">
+
+                            <a class="btn btn-primary"
+                               href="/chat?community_id={{ community.id }}">
+                                💬 立即進入聊天室
+                            </a>
+
+                            {% if membership and not is_creator %}
+                            <button type="button"
+                                    class="btn btn-danger"
+                                    onclick="leaveCommunity()">
+                                🚪 退出{{ "社團" if community.community_type == "club" else "群組" }}
+                            </button>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {% else %}
+
+
+                <div class="panel">
+
+                    <h2>💬 聊天室</h2>
+
+                    <div class="empty-state">
+
+                        你目前尚未加入此社群。
+
+                        <br><br>
+
+                        加入社群後即可使用聊天室。
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+            </section>
+
+
+            <!-- =====================================================
+                 右側
+            ====================================================== -->
+
+            <aside>
+
+
+                <!-- =================================================
+                     建立者審核
+                ================================================== -->
+                {% if is_creator %}
+
+                <div class="panel">
+
+                    <h2>
+
+                        📨 待審核加入申請
+
+                        <span id="requestCount"
+                              class="badge badge-yellow"
+                              style="display:none;">
+                            0
+                        </span>
+
+                    </h2>
+
+
+                    <div id="joinRequestList"
+                         class="request-list">
+
+                        <div class="empty-state">
+                            載入中...
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- =================================================
+                     社群成員
+                ================================================== -->
+
+                <div class="panel">
+
+                    <h2>👥 社群成員</h2>
+
+
+                    <div class="member-list">
+
+                        {% if members %}
+
+
+                        {% for member in members %}
+
+                        <div class="member-item">
+
+
+                            <div class="member-avatar">
+
+                                {% if member.user %}
+
+                                {{
+                                            (
+                                                member.user.full_name
+                                                or
+                                                member.user.username
+                                                or
+                                                "U"
+                                            )[0]
+                                }}
+
+                                {% else %}
+
+                                U
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <div>
+
+                                <div class="member-name">
+
+                                    {% if member.user %}
+
+                                    {{
+                                                member.user.full_name
+                                                or
+                                                member.user.username
+                                                or
+                                                "未知使用者"
+                                    }}
+
+                                    {% else %}
+
+                                    未知使用者
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                <div class="member-role">
+
+                                    {% if member.role == "owner" %}
+
+                                    👑 建立者
+
+                                    {% elif member.role == "admin" %}
+
+                                    🛡️ 管理員
+
+                                    {% else %}
+
+                                    成員
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+
+                        {% else %}
+
+                        <div class="empty-state">
+                            尚無成員
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+            </aside>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<script>
+
+const communityId = {{ community.id }};
+
+
+/* =====================================================
+   HTML 安全處理
+===================================================== */
+
+function escapeHTML(value) {
+
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        String(value ?? "");
+
+    return element.innerHTML;
+}
+
+
+/* =====================================================
+   建立者審核
+===================================================== */
+
+{% if is_creator %}
+
+
+async function loadJoinRequests() {
+
+    const list =
+        document.getElementById(
+            "joinRequestList"
+        );
+
+    const count =
+        document.getElementById(
+            "requestCount"
+        );
+
+
+    if (!list || !count) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `/communities/${communityId}/join-requests`
+            );
+
+
+        const result =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !result.success
+        ) {
+
+            throw new Error(
+                result.message ||
+                "載入申請失敗"
+            );
+        }
+
+
+        const requests =
+            result.data || [];
+
+
+        if (!requests.length) {
+
+            list.innerHTML = `
+
+                <div class="empty-state">
+
+                    目前沒有待審核的加入申請
+
+                </div>
+
+            `;
+
+
+            count.style.display =
+                "none";
+
+            return;
+        }
+
+
+        count.textContent =
+            requests.length;
+
+
+        count.style.display =
+            "inline-block";
+
+
+        list.innerHTML = "";
+
+
+        requests.forEach(item => {
+
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "request-item";
+
+
+            const initial =
+                (
+                    item.user_name ||
+                    "U"
+                ).charAt(0);
+
+
+            card.innerHTML = `
+
+                <div class="member-avatar">
+
+                    ${escapeHTML(initial)}
+
+                </div>
+
+
+                <div class="request-info">
+
+
+                    <div class="member-name">
+
+                        ${escapeHTML(
+                            item.user_name ||
+                            "未知使用者"
+                        )}
+
+                    </div>
+
+
+                    <div class="member-role">
+
+                        ${
+                            item.student_no
+                                ?
+                                "學號：" +
+                                escapeHTML(
+                                    item.student_no
+                                ) +
+                                "<br>"
+                                :
+                                ""
+                        }
+
+                        申請時間：
+
+                        ${escapeHTML(
+                            item.created_at ||
+                            "-"
+                        )}
+
+                    </div>
+
+
+                    <div class="request-actions">
+
+
+                        <button
+                            type="button"
+                            class="btn btn-success"
+                            onclick="
+                                approveRequest(
+                                    ${item.id}
+                                )
+                            "
+                        >
+                            ✓ 同意
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-danger"
+                            onclick="
+                                rejectRequest(
+                                    ${item.id}
+                                )
+                            "
+                        >
+                            ✕ 拒絕
+                        </button>
+
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            list.appendChild(
+                card
+            );
+
+        });
+
+
+    } catch (error) {
+
+
+        list.innerHTML = `
+
+            <div class="empty-state">
+
+                ${escapeHTML(
+                    error.message
+                )}
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =====================================================
+   同意加入
+===================================================== */
+
+async function approveRequest(
+    requestId
+) {
+
+    if (
+        !confirm(
+            "確定同意這位使用者加入？"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+
+        const response =
+            await fetch(
+
+                `/communities/${communityId}/join-requests/${requestId}/approve`,
+
+                {
+                    method: "POST"
+                }
+
+            );
+
+
+        const result =
+            await response.json();
+
+
+        alert(
+            result.message ||
+            "處理完成"
+        );
+
+
+        if (result.success) {
+
+            location.reload();
+
+        }
+
+
+    } catch (error) {
+
+
+        alert(
+            "審核失敗：" +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   拒絕加入
+===================================================== */
+
+async function rejectRequest(
+    requestId
+) {
+
+    if (
+        !confirm(
+            "確定拒絕這個加入申請？"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+
+        const response =
+            await fetch(
+
+                `/communities/${communityId}/join-requests/${requestId}/reject`,
+
+                {
+                    method: "POST"
+                }
+
+            );
+
+
+        const result =
+            await response.json();
+
+
+        alert(
+            result.message ||
+            "處理完成"
+        );
+
+
+        if (result.success) {
+
+            loadJoinRequests();
+
+        }
+
+
+    } catch (error) {
+
+
+        alert(
+            "審核失敗：" +
+            error.message
+        );
+
+    }
+
+}
+
+
+loadJoinRequests();
+
+
+{% endif %}
+
+
+
+/* =====================================================
+   退出社團 / 群組
+===================================================== */
+async function leaveCommunity() {
+    const typeName = {{ ('"社團"' if community.community_type == 'club' else '"群組"') | safe }};
+    if (!confirm(`確定要退出這個${typeName}嗎？退出後需要重新加入才能再次進入聊天室。`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/communities/${communityId}/leave`, {
+            method: "POST"
+        });
+        const result = await response.json();
+        alert(result.message || "處理完成");
+        if (response.ok && result.success) {
+            window.location.href = "/communities/";
+        }
+    } catch (error) {
+        alert("退出失敗：" + error.message);
+    }
+}
+</script>
+
+{% endblock %}

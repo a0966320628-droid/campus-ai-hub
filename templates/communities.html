@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+{% block title %}社團與群組{% endblock %}
+
+{% block content %}
+<style>
+    .community-page {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 28px 22px 56px;
+    }
+
+    .community-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+        .community-hero h1 {
+            margin: 0 0 7px;
+            font-size: 30px;
+            font-weight: 800;
+        }
+
+        .community-hero p {
+            margin: 0;
+            color: #94a3b8;
+        }
+
+    .page-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .ui-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 42px;
+        padding: 0 17px;
+        border: 0;
+        border-radius: 11px;
+        text-decoration: none;
+        font-weight: 700;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+        .ui-btn:hover {
+            transform: translateY(-1px);
+        }
+
+    .ui-btn-primary {
+        background: #2563eb;
+        color: #fff;
+    }
+
+    .ui-btn-secondary {
+        background: #243247;
+        color: #fff;
+    }
+
+    .ui-btn-success {
+        background: #15803d;
+        color: #fff;
+    }
+
+    .panel {
+        background: #0f1a2e;
+        border: 1px solid #334155;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 12px 30px rgba(0,0,0,.12);
+    }
+
+    .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 17px;
+        font-size: 20px;
+    }
+
+    .search-grid {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) 180px auto;
+        gap: 12px;
+    }
+
+    .create-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 13px;
+    }
+
+    .field-full {
+        grid-column: 1/-1;
+    }
+
+    .community-page input,
+    .community-page textarea,
+    .community-page select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #475569;
+        background: #0b1528;
+        color: #f8fafc;
+        border-radius: 11px;
+        padding: 12px 14px;
+        outline: none;
+    }
+
+    .community-page textarea {
+        min-height: 92px;
+        resize: vertical;
+    }
+
+        .community-page input:focus,
+        .community-page textarea:focus,
+        .community-page select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.14);
+        }
+
+        .community-page input::placeholder,
+        .community-page textarea::placeholder {
+            color: #64748b;
+        }
+
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+        margin: 28px 0 14px;
+    }
+
+        .list-header h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .list-header span {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+    .community-grid {
+        display: grid;
+        grid-template-columns: repeat(3,minmax(0,1fr));
+        gap: 16px;
+    }
+
+    .community-card {
+        min-width: 0;
+        background: #0f1a2e;
+        border: 1px solid #334155;
+        border-radius: 17px;
+        padding: 19px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        transition: .2s ease;
+    }
+
+        .community-card:hover {
+            transform: translateY(-3px);
+            border-color: #475569;
+        }
+
+    .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+        .card-head h3 {
+            margin: 0;
+            font-size: 19px;
+            overflow-wrap: anywhere;
+        }
+
+    .type-badge {
+        flex: none;
+        border-radius: 999px;
+        padding: 5px 9px;
+        background: #1e3a5f;
+        color: #bfdbfe;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .card-description {
+        color: #cbd5e1;
+        line-height: 1.65;
+        min-height: 52px;
+        margin: 0;
+    }
+
+    .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .meta {
+        padding: 6px 9px;
+        border-radius: 8px;
+        background: #172337;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .card-actions {
+        margin-top: auto;
+        padding-top: 3px;
+    }
+
+        .card-actions .ui-btn {
+            width: 100%;
+        }
+
+    .join-form {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .empty-state {
+        grid-column: 1/-1;
+        padding: 50px 20px;
+        text-align: center;
+        border: 1px dashed #475569;
+        border-radius: 16px;
+        color: #94a3b8;
+    }
+
+    @media(max-width:1000px) {
+        .community-grid {
+            grid-template-columns: repeat(2,minmax(0,1fr));
+        }
+    }
+
+    @media(max-width:720px) {
+        .community-page {
+            padding: 18px 12px 40px;
+        }
+
+        .community-hero {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .search-grid, .create-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .field-full {
+            grid-column: auto;
+        }
+
+        .community-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-actions {
+            width: 100%;
+        }
+
+            .page-actions .ui-btn {
+                flex: 1;
+            }
+    }
+</style>
+
+<div class="community-page">
+    <div class="community-hero">
+        <div>
+            <h1>🏫 社團、群組與論壇</h1>
+            <p>探索校園社群、加入群組，或建立屬於自己的交流空間。</p>
+        </div>
+        <div class="page-actions">
+            <a class="ui-btn ui-btn-secondary" href="/chat">💬 聊天室</a>
+            <a class="ui-btn ui-btn-secondary" href="/dashboard">🏠 返回首頁</a>
+        </div>
+    </div>
+
+    <section class="panel">
+        <h2 class="panel-title">🔎 搜尋社團群組</h2>
+        <form method="get" class="search-grid">
+            <input type="text" name="q" placeholder="輸入社團、群組或論壇名稱"
+                   value="{{ request.args.get('q', '') }}">
+            <select name="filter">
+                <option value="all" {% if request.args.get('filter','all')=='all' %}selected{% endif %}>全部類型</option>
+                <option value="club" {% if request.args.get('filter')=='club' %}selected{% endif %}>🏫 社團</option>
+                <option value="group" {% if request.args.get('filter')=='group' %}selected{% endif %}>👥 群組</option>
+                <option value="forum" {% if request.args.get('filter')=='forum' %}selected{% endif %}>💬 論壇</option>
+            </select>
+            <button class="ui-btn ui-btn-primary" type="submit">搜尋</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2 class="panel-title">➕ 建立社團或群組</h2>
+        <form id="createCommunityForm" class="create-grid">
+            <input name="name" placeholder="社團／群組名稱" required>
+            <select name="community_type">
+                <option value="club">🏫 社團</option>
+                <option value="group">👥 群組</option>
+                <option value="forum">💬 論壇</option>
+            </select>
+
+            <textarea class="field-full" name="description"
+                      placeholder="簡單介紹這個社團或群組..."></textarea>
+
+            <select name="join_mode" id="joinMode">
+                <option value="open">🌐 公開加入</option>
+                <option value="approval">✅ 需要建立者審核</option>
+                <option value="password">🔐 需要密碼</option>
+                <option value="password_approval">🔐 密碼 + 建立者審核</option>
+            </select>
+
+            <input id="createPassword" type="password" name="password"
+                   placeholder="加入密碼（選擇密碼模式時填寫）">
+
+            <div class="field-full">
+                <button class="ui-btn ui-btn-primary" type="submit">＋ 建立社群</button>
+            </div>
+        </form>
+    </section>
+
+    <div class="list-header">
+        <div>
+            <h2>✨ 探索社群</h2>
+            <span>選擇感興趣的社團、群組或論壇</span>
+        </div>
+    </div>
+
+    <div class="community-grid">
+        {% for community in communities %}
+        <article class="community-card">
+            <div class="card-head">
+                <h3>
+                    {% if community.community_type == "club" %}🏫
+                    {% elif community.community_type == "group" %}👥
+                    {% else %}💬{% endif %}
+                    {{ community.name }}
+                </h3>
+                <span class="type-badge">
+                    {% if community.community_type == "club" %}社團
+                    {% elif community.community_type == "group" %}群組
+                    {% else %}論壇{% endif %}
+                </span>
+            </div>
+
+            <p class="card-description">
+                {{ community.description or "建立者尚未填寫社群介紹。" }}
+            </p>
+
+            <div class="meta-row">
+                <span class="meta">
+                    👥 {{ community.members|length }} 位成員
+                </span>
+                <span class="meta">
+                    {% if community.join_mode == "open" %}🌐 公開加入
+                    {% elif community.join_mode == "approval" %}✅ 審核加入
+                    {% elif community.join_mode == "password" %}🔐 密碼加入
+                    {% elif community.join_mode == "password_approval" %}🔐 密碼＋審核
+                    {% else %}加入方式{% endif %}
+                </span>
+            </div>
+
+            <div class="card-actions">
+                {% if community.id in joined_ids %}
+                <a href="/communities/{{ community.id }}"
+                   class="ui-btn ui-btn-success">
+                    進入社群 →
+                </a>
+                {% else %}
+                <form class="join-form" data-id="{{ community.id }}">
+                    {% if community.join_mode in ["password", "password_approval"] %}
+                    <input type="password" name="password"
+                           placeholder="輸入加入密碼">
+                    {% endif %}
+                    <button class="ui-btn ui-btn-primary" type="submit">
+                        ＋ 加入社群
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </article>
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size:38px;margin-bottom:10px;">🔍</div>
+            目前找不到符合條件的社團或群組
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    const createForm = document.getElementById("createCommunityForm");
+    const joinMode = document.getElementById("joinMode");
+    const createPassword = document.getElementById("createPassword");
+
+    function updatePasswordField() {
+        const needsPassword =
+            joinMode.value === "password" ||
+            joinMode.value === "password_approval";
+
+        createPassword.style.display = needsPassword ? "block" : "none";
+        createPassword.required = needsPassword;
+        if (!needsPassword) createPassword.value = "";
+    }
+    joinMode.addEventListener("change", updatePasswordField);
+    updatePasswordField();
+
+    createForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const button = this.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = "建立中...";
+
+        try {
+            const result = await fetch("/communities/create", {
+                method: "POST",
+                body: new FormData(this)
+            });
+
+            const data = await result.json();
+            alert(data.message);
+
+            if (data.success) {
+                location.reload();
+            }
+        } catch (error) {
+            alert("建立失敗，請稍後再試。");
+        } finally {
+            button.disabled = false;
+            button.textContent = "＋ 建立社群";
+        }
+    });
+
+    document.querySelectorAll(".join-form").forEach(form => {
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const id = this.dataset.id;
+            const button = this.querySelector('button[type="submit"]');
+
+            button.disabled = true;
+            button.textContent = "處理中...";
+
+            try {
+                const result = await fetch(`/communities/${id}/join`, {
+                    method: "POST",
+                    body: new FormData(this)
+                });
+
+                const data = await result.json();
+                alert(data.message);
+
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                alert("加入失敗，請稍後再試。");
+            } finally {
+                button.disabled = false;
+                button.textContent = "＋ 加入社群";
+            }
+        });
+    });
+</script>
+{% endblock %}

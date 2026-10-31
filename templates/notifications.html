@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}通知中心｜Campus AI Hub{% endblock %}
+
+{% block content %}
+<style>
+    .notification-page {
+        min-height: 100vh;
+        background: #020617;
+        padding: 32px 18px 60px;
+        color: white;
+    }
+
+    .notification-container {
+        width: min(1050px, 96%);
+        margin: 0 auto;
+    }
+
+    .notification-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+    }
+
+    .notification-header h1 {
+        margin: 0;
+        font-size: 30px;
+    }
+
+    .notification-header p {
+        color: #94a3b8;
+        margin: 7px 0 0;
+    }
+
+    .back-btn,
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 14px;
+        border-radius: 11px;
+        text-decoration: none;
+        color: white;
+        border: 1px solid #334155;
+        background: #1e293b;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .summary-card,
+    .panel {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 17px;
+    }
+
+    .summary-card {
+        padding: 18px;
+    }
+
+    .summary-label {
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+    .summary-value {
+        font-size: 31px;
+        font-weight: 800;
+        margin-top: 8px;
+    }
+
+    .panel {
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .panel-header h2 {
+        margin: 0;
+        font-size: 19px;
+    }
+
+    .notification-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .notification-item {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 13px;
+        padding: 14px;
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .item-title {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .item-text {
+        color: #cbd5e1;
+        font-size: 13px;
+        line-height: 1.55;
+    }
+
+    .item-time {
+        color: #64748b;
+        font-size: 11px;
+        margin-top: 7px;
+    }
+
+    .empty-state {
+        color: #94a3b8;
+        text-align: center;
+        padding: 28px 12px;
+        border: 1px dashed #475569;
+        border-radius: 12px;
+    }
+
+    .message-type {
+        color: #93c5fd;
+        font-size: 11px;
+        margin-bottom: 5px;
+    }
+
+    @media (max-width: 720px) {
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .notification-item {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="notification-page">
+    <div class="notification-container">
+        <div class="notification-header">
+            <div>
+                <a href="/dashboard" class="back-btn">← 返回首頁</a>
+                <h1 style="margin-top:16px;">🔔 通知中心</h1>
+                <p>集中查看好友邀請與聊天訊息提醒。</p>
+            </div>
+        </div>
+
+        <section class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">全部待處理提醒</div>
+                <div class="summary-value">{{ total_notification_count }}</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">好友邀請</div>
+                <div class="summary-value">{{ pending_friend_count }}</div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-label">未讀聊天訊息</div>
+                <div class="summary-value">{{ unread_message_count }}</div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>👥 好友邀請</h2>
+                <a href="/friends" class="action-btn">前往好友管理</a>
+            </div>
+
+            <div class="notification-list">
+                {% for friendship in pending_requests %}
+                <div class="notification-item">
+                    <div>
+                        <div class="item-title">
+                            {{ friendship.requester.full_name if friendship.requester else "使用者" }} 想加你為好友
+                        </div>
+                        <div class="item-text">
+                            到好友管理頁即可接受或拒絕這筆邀請。
+                        </div>
+                        <div class="item-time">
+                            {% if friendship.created_at %}
+                                {{ friendship.created_at.strftime("%Y-%m-%d %H:%M") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <a href="/friends" class="action-btn">處理邀請</a>
+                </div>
+                {% else %}
+                <div class="empty-state">目前沒有等待處理的好友邀請。</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>💬 最近聊天訊息</h2>
+                <a href="/chat" class="action-btn">開啟聊天室</a>
+            </div>
+
+            <div class="notification-list">
+                {% for message in recent_messages %}
+                <div class="notification-item">
+                    <div>
+                        <div class="message-type">
+                            {{ message.room.name if message.room else "聊天室" }}
+                        </div>
+                        <div class="item-title">
+                            {{ message.sender.full_name if message.sender else "使用者" }}
+                        </div>
+                        <div class="item-text">
+                            {% if message.message_type == "text" %}
+                                {{ message.content or "（空白訊息）" }}
+                            {% elif message.message_type == "image" %}
+                                🖼️ 傳送了一張圖片
+                            {% else %}
+                                📎 傳送了一個檔案：{{ message.file_name or "附件" }}
+                            {% endif %}
+                        </div>
+                        <div class="item-time">
+                            {% if message.created_at %}
+                                {{ message.created_at.strftime("%Y-%m-%d %H:%M") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">目前沒有最近聊天訊息。</div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

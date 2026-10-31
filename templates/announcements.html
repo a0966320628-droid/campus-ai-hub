@@ -1,0 +1,1343 @@
+{% extends "base.html" %}
+{% block title %}智慧資訊中心｜Campus AI Hub{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .announcement-page {
+        min-height: 100vh;
+        background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.15), transparent 35%), linear-gradient(135deg, #020617, #0f172a 55%, #111827);
+        color: #e2e8f0;
+        padding-bottom: 50px;
+    }
+
+    .announcement-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: rgba(15, 23, 42, 0.96);
+        border-bottom: 1px solid #334155;
+        backdrop-filter: blur(12px);
+    }
+
+    .announcement-topbar-inner {
+        width: min(1350px, 94%);
+        margin: 0 auto;
+        padding: 15px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .page-brand h1 {
+        margin: 0;
+        color: #f8fafc;
+        font-size: 24px;
+    }
+
+    .page-brand p {
+        margin: 5px 0 0;
+        color: #94a3b8;
+        font-size: 13px;
+    }
+
+    .top-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        border: none;
+        border-radius: 10px;
+        padding: 10px 15px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+    .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+    .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+    .btn-secondary {
+        background: #334155;
+        color: white;
+    }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid #64748b;
+        color: #e2e8f0;
+    }
+
+        .btn-outline:hover {
+            background: #334155;
+        }
+
+    .announcement-container {
+        width: min(1350px, 94%);
+        margin: 0 auto;
+        padding-top: 22px;
+    }
+
+    .message-box {
+        display: none;
+        margin-bottom: 16px;
+        padding: 13px 15px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .message-success {
+        display: block;
+        background: rgba(22, 163, 74, 0.15);
+        border: 1px solid #22c55e;
+        color: #bbf7d0;
+    }
+
+    .message-error {
+        display: block;
+        background: rgba(220, 38, 38, 0.15);
+        border: 1px solid #ef4444;
+        color: #fecaca;
+    }
+
+    .announcement-layout {
+        display: grid;
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .panel {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid #334155;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 105px;
+    }
+
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+        .sidebar-header h2 {
+            margin: 0;
+            color: #f8fafc;
+            font-size: 19px;
+        }
+
+    .search-area {
+        display: grid;
+        gap: 9px;
+        margin-bottom: 14px;
+    }
+
+    .form-control {
+        width: 100%;
+        border: 1px solid #475569;
+        background: #0f172a;
+        color: #f8fafc;
+        outline: none;
+        border-radius: 10px;
+        padding: 11px 12px;
+        font-size: 14px;
+    }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+    textarea.form-control {
+        min-height: 280px;
+        resize: vertical;
+        line-height: 1.7;
+    }
+
+    .category-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 14px;
+    }
+
+    .category-btn {
+        border: 1px solid #475569;
+        background: #111827;
+        color: #cbd5e1;
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: #1d4ed8;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+    .post-list {
+        display: grid;
+        gap: 9px;
+        max-height: calc(100vh - 360px);
+        overflow-y: auto;
+        padding-right: 3px;
+    }
+
+    .post-item {
+        width: 100%;
+        text-align: left;
+        border: 1px solid #334155;
+        background: #111827;
+        color: #e2e8f0;
+        border-radius: 13px;
+        padding: 13px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .post-item:hover {
+            background: #1e293b;
+            border-color: #3b82f6;
+        }
+
+        .post-item.active {
+            background: #1e3a8a;
+            border-color: #60a5fa;
+        }
+
+    .post-list-title {
+        color: white;
+        font-weight: bold;
+        margin-bottom: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .post-badges {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 7px;
+    }
+
+    .badge {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+
+    .badge-category {
+        background: #334155;
+        color: #bfdbfe;
+    }
+
+    .badge-priority {
+        background: #7f1d1d;
+        color: #fecaca;
+    }
+
+    .post-preview {
+        color: #94a3b8;
+        font-size: 12px;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .post-time {
+        margin-top: 7px;
+        color: #64748b;
+        font-size: 11px;
+    }
+
+    .editor-panel {
+        min-height: 650px;
+    }
+
+    .editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+        .editor-header h2 {
+            margin: 0;
+            color: #f8fafc;
+        }
+
+    .editor-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #cbd5e1;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .helper-text {
+        color: #94a3b8;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .post-info-bar {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        background: #111827;
+        color: #94a3b8;
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        font-size: 12px;
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 12px;
+        border-radius: 11px;
+        background: #111827;
+        border: 1px solid #334155;
+    }
+
+        .checkbox-row input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-row label {
+            cursor: pointer;
+            color: #cbd5e1;
+        }
+
+    .priority-help {
+        color: #94a3b8;
+        font-size: 12px;
+        line-height: 1.5;
+        margin-top: 5px;
+    }
+
+    .attachment-upload-box {
+        border: 1px dashed #475569;
+        background: #0b1220;
+        border-radius: 13px;
+        padding: 14px;
+    }
+
+        .attachment-upload-box .form-control {
+            background: #111827;
+        }
+
+    #attachmentList .btn {
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+
+    .empty-state {
+        padding: 35px 15px;
+        text-align: center;
+        color: #94a3b8;
+        border: 1px dashed #475569;
+        border-radius: 13px;
+    }
+
+    @media (max-width: 950px) {
+        .announcement-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: static;
+        }
+
+        .post-list {
+            max-height: 350px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .top-actions,
+        .editor-actions {
+            width: 100%;
+        }
+
+            .top-actions .btn,
+            .editor-actions .btn {
+                flex: 1;
+            }
+    }
+</style>
+
+<div class="announcement-page">
+
+    <header class="announcement-topbar">
+        <div class="announcement-topbar-inner">
+
+            <div class="page-brand">
+                <h1>📢 智慧資訊中心</h1>
+
+                <p>
+                    管理校園公告、活動、競賽、教務資訊與交流貼文。
+                </p>
+            </div>
+
+            <div class="top-actions">
+
+                <a class="btn btn-secondary"
+                   href="/dashboard">
+                    🏠 返回首頁
+                </a>
+
+                <a class="btn btn-secondary"
+                   href="/profile">
+                    👤 個人資訊
+                </a>
+
+            </div>
+        </div>
+    </header>
+
+    <div class="announcement-container">
+
+        <div id="messageBox"
+             class="message-box"></div>
+
+        <div class="announcement-layout">
+
+            <!-- 左側列表 -->
+            <aside class="panel sidebar">
+
+                <div class="sidebar-header">
+
+                    <h2>資訊列表</h2>
+
+                    <button type="button"
+                            class="btn btn-primary"
+                            onclick="newPost()">
+                        ＋新增
+                    </button>
+
+                </div>
+
+                <div class="search-area">
+
+                    <input id="searchInput"
+                           class="form-control"
+                           type="text"
+                           placeholder="搜尋標題或內容...">
+
+                    <select id="searchCategory"
+                            class="form-control">
+                        <option value="">全部分類</option>
+                        <option value="教務">教務</option>
+                        <option value="競賽">競賽</option>
+                        <option value="活動">活動</option>
+                        <option value="交流">交流</option>
+                        <option value="一般資訊">一般資訊</option>
+                    </select>
+
+                </div>
+
+                <div class="category-tabs">
+
+                    <button class="category-btn active"
+                            data-category="">
+                        全部
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="教務">
+                        教務
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="競賽">
+                        競賽
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="活動">
+                        活動
+                    </button>
+
+                    <button class="category-btn"
+                            data-category="交流">
+                        交流
+                    </button>
+
+                </div>
+
+                <div id="postList"
+                     class="post-list">
+                    <div class="empty-state">
+                        正在載入資訊...
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- 右側編輯區 -->
+            <main class="panel editor-panel">
+
+                <div class="editor-header">
+
+                    <h2 id="editorTitle">
+                        新增資訊
+                    </h2>
+
+                    <div class="editor-actions">
+
+                        <button class="btn btn-success"
+                                type="button"
+                                onclick="savePost()">
+                            💾 儲存
+                        </button>
+
+                        <button id="deletePostButton"
+                                class="btn btn-danger"
+                                type="button"
+                                onclick="deletePost()"
+                                style="display:none;">
+                            🗑 刪除
+                        </button>
+
+                    </div>
+                </div>
+
+                <div id="postInfoBar"
+                     class="post-info-bar"
+                     style="display:none;">
+                    <span id="postIdText"></span>
+                    <span id="authorText"></span>
+                    <span id="createdAtText"></span>
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label"
+                           for="postTitle">
+                        標題
+                    </label>
+
+                    <input id="postTitle"
+                           class="form-control"
+                           type="text"
+                           maxlength="200"
+                           placeholder="例如：AI 專題競賽開始報名">
+
+                    <div class="helper-text">
+                        請輸入清楚且容易辨識的資訊標題。
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label"
+                           for="postCategory">
+                        分類
+                    </label>
+
+                    <select id="postCategory"
+                            class="form-control">
+                        <option value="教務">教務</option>
+                        <option value="競賽">競賽</option>
+                        <option value="活動">活動</option>
+                        <option value="交流">交流</option>
+                        <option value="一般資訊">一般資訊</option>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label class="form-label"
+                           for="postContent">
+                        內容
+                    </label>
+
+                    <textarea id="postContent"
+                              class="form-control"
+                              placeholder="請輸入公告或資訊內容..."></textarea>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="postAttachments">📎 公告附件</label>
+                    <div class="attachment-upload-box">
+                        <input id="postAttachments"
+                               class="form-control"
+                               type="file"
+                               multiple
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z">
+                        <div class="helper-text">
+                            可一次選擇多個檔案；單檔上限 20MB。支援 PDF、Word、Excel、PowerPoint、文字、圖片與壓縮檔。
+                        </div>
+                        <div id="selectedFilesText" class="helper-text"></div>
+                    </div>
+                    <div id="attachmentList" style="margin-top:10px;display:grid;gap:8px;"></div>
+                </div>
+
+                <div class="form-group">
+
+                    <div class="checkbox-row">
+
+                        <input id="priorityCheckbox"
+                               type="checkbox">
+
+                        <label for="priorityCheckbox">
+                            ⭐ 設定為 AI 優先資訊
+                        </label>
+
+                    </div>
+
+                    <div class="priority-help">
+                        AI 優先資訊可用於重要公告、競賽、活動或需要優先提醒的內容。
+                    </div>
+
+                </div>
+
+            </main>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    const currentUserId =
+        {{ current_user.id }};
+
+    const currentUserRole =
+        "{{ current_user.role }}";
+
+    let posts = [];
+    let selectedPostId = null;
+
+
+    const postList =
+        document.getElementById(
+            "postList"
+        );
+
+    const postTitle =
+        document.getElementById(
+            "postTitle"
+        );
+
+    const postCategory =
+        document.getElementById(
+            "postCategory"
+        );
+
+    const postContent =
+        document.getElementById(
+            "postContent"
+        );
+
+    const priorityCheckbox =
+        document.getElementById(
+            "priorityCheckbox"
+        );
+
+    const postAttachments = document.getElementById("postAttachments");
+    const attachmentList = document.getElementById("attachmentList");
+
+    const searchInput =
+        document.getElementById(
+            "searchInput"
+        );
+
+    const searchCategory =
+        document.getElementById(
+            "searchCategory"
+        );
+
+    const editorTitle =
+        document.getElementById(
+            "editorTitle"
+        );
+
+    const deletePostButton =
+        document.getElementById(
+            "deletePostButton"
+        );
+
+    const postInfoBar =
+        document.getElementById(
+            "postInfoBar"
+        );
+
+    const postIdText =
+        document.getElementById(
+            "postIdText"
+        );
+
+    const authorText =
+        document.getElementById(
+            "authorText"
+        );
+
+    const createdAtText =
+        document.getElementById(
+            "createdAtText"
+        );
+
+
+    postAttachments.addEventListener("change", () => {
+        const box = document.getElementById("selectedFilesText");
+        const names = Array.from(postAttachments.files || []).map(file => file.name);
+        box.textContent = names.length
+            ? `已選擇 ${names.length} 個檔案：${names.join("、")}`
+            : "";
+    });
+
+
+    function escapeHTML(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll(
+                "'",
+                "&#039;"
+            );
+    }
+
+
+    function showMessage(
+        message,
+        success = true
+    ) {
+
+        const box =
+            document.getElementById(
+                "messageBox"
+            );
+
+        box.textContent =
+            message;
+
+        box.className =
+            success
+                ? "message-box message-success"
+                : "message-box message-error";
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+        setTimeout(() => {
+            box.className =
+                "message-box";
+        }, 4000);
+    }
+
+
+    function userCanEdit(post) {
+
+        if (
+            currentUserRole === "admin"
+        ) {
+            return true;
+        }
+
+        return (
+            Number(post.author_id) ===
+            Number(currentUserId)
+        );
+    }
+
+
+    async function loadPosts() {
+
+        try {
+
+            const keyword =
+                searchInput
+                    .value
+                    .trim();
+
+            const category =
+                searchCategory
+                    .value;
+
+            const params =
+                new URLSearchParams();
+
+            if (keyword) {
+                params.set(
+                    "q",
+                    keyword
+                );
+            }
+
+            if (category) {
+                params.set(
+                    "category",
+                    category
+                );
+            }
+
+            let url =
+                "/api/posts";
+
+            if (
+                params.toString()
+            ) {
+                url +=
+                    "?" +
+                    params.toString();
+            }
+
+            const response =
+                await fetch(url);
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+                throw new Error(
+                    result.message ||
+                    "載入資訊失敗"
+                );
+            }
+
+            posts =
+                result.data || [];
+
+            renderPostList();
+
+        } catch (error) {
+
+            postList.innerHTML = `
+                <div class="empty-state">
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </div>
+            `;
+        }
+    }
+
+
+    function renderPostList() {
+
+        postList.innerHTML = "";
+
+        if (!posts.length) {
+
+            postList.innerHTML = `
+                <div class="empty-state">
+                    找不到符合條件的資訊。
+                    <br><br>
+                    可點「＋新增」建立新的公告。
+                </div>
+            `;
+
+            return;
+        }
+
+        posts.forEach(post => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type =
+                "button";
+
+            button.className =
+                "post-item";
+
+            if (
+                Number(post.id) ===
+                Number(
+                    selectedPostId
+                )
+            ) {
+                button.classList.add(
+                    "active"
+                );
+            }
+
+            let priorityBadge = "";
+
+            if (
+                post.is_ai_priority
+            ) {
+                priorityBadge = `
+                    <span
+                        class="
+                            badge
+                            badge-priority
+                        "
+                    >
+                        ⭐ AI 優先
+                    </span>
+                `;
+            }
+
+            button.innerHTML = `
+                <div
+                    class="
+                        post-list-title
+                    "
+                >
+                    ${escapeHTML(
+                        post.title
+                    )}
+                </div>
+
+                <div class="post-badges">
+
+                    <span
+                        class="
+                            badge
+                            badge-category
+                        "
+                    >
+                        ${escapeHTML(
+                            post.category ||
+                            "一般資訊"
+                        )}
+                    </span>
+
+                    ${priorityBadge}
+
+                </div>
+
+                <div class="post-preview">
+                    ${escapeHTML(
+                        post.content ||
+                        "尚無內容"
+                    )}
+                </div>
+
+                <div class="post-time">
+                    ${escapeHTML(
+                        post.author_name ||
+                        "未知作者"
+                    )}
+                    ・
+                    ${escapeHTML(
+                        post.created_at ||
+                        "-"
+                    )}
+                </div>
+            `;
+
+            button.addEventListener(
+                "click",
+                () => {
+                    selectPost(
+                        post.id
+                    );
+                }
+            );
+
+            postList.appendChild(
+                button
+            );
+        });
+    }
+
+
+    function newPost() {
+
+        selectedPostId = null;
+
+        editorTitle.textContent =
+            "新增資訊";
+
+        postTitle.value = "";
+
+        postCategory.value =
+            "一般資訊";
+
+        postContent.value = "";
+
+        priorityCheckbox.checked =
+            false;
+        postAttachments.value = "";
+        attachmentList.innerHTML = "";
+        document.getElementById("selectedFilesText").textContent = "";
+
+        postInfoBar.style.display =
+            "none";
+
+        deletePostButton.style.display =
+            "none";
+
+        postTitle.disabled =
+            false;
+
+        postCategory.disabled =
+            false;
+
+        postContent.disabled =
+            false;
+
+        priorityCheckbox.disabled =
+            false;
+
+        renderPostList();
+
+        postTitle.focus();
+    }
+
+
+    function selectPost(postId) {
+
+        const post =
+            posts.find(
+                item =>
+                    Number(item.id) ===
+                    Number(postId)
+            );
+
+        if (!post) {
+            return;
+        }
+
+        selectedPostId =
+            post.id;
+
+        editorTitle.textContent =
+            userCanEdit(post)
+                ? "修改資訊"
+                : "查看資訊";
+
+        postTitle.value =
+            post.title || "";
+
+        postCategory.value =
+            post.category ||
+            "一般資訊";
+
+        postContent.value =
+            post.content || "";
+
+        priorityCheckbox.checked =
+            Boolean(
+                post.is_ai_priority
+            );
+        postAttachments.value = "";
+        renderAttachments(post);
+
+        postInfoBar.style.display =
+            "flex";
+
+        postIdText.textContent =
+            `資訊編號：${post.id}`;
+
+        authorText.textContent =
+            `作者：${
+                post.author_name ||
+                "未知"
+            }`;
+
+        createdAtText.textContent =
+            `建立時間：${
+                post.created_at ||
+                "-"
+            }`;
+
+        const canEdit =
+            userCanEdit(post);
+
+        postTitle.disabled =
+            !canEdit;
+
+        postCategory.disabled =
+            !canEdit;
+
+        postContent.disabled =
+            !canEdit;
+
+        priorityCheckbox.disabled =
+            !canEdit;
+
+        deletePostButton.style.display =
+            canEdit
+                ? "inline-flex"
+                : "none";
+
+        renderPostList();
+    }
+
+
+    function renderAttachments(post) {
+        attachmentList.innerHTML = "";
+        const items = post.attachments || [];
+        if (!items.length) { attachmentList.innerHTML = '<div class="helper-text">目前沒有附件。</div>'; return; }
+        items.forEach(file => {
+            const row=document.createElement("div");
+            row.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #334155;border-radius:10px;background:#111827;";
+            row.innerHTML=`<div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📄 ${escapeHTML(file.original_name)}</div><div style="display:flex;gap:6px;flex-shrink:0;"><a class="btn btn-outline" href="/api/posts/${post.id}/attachments/${file.id}/download">⬇ 下載</a>${userCanEdit(post) ? `<button class="btn btn-danger" type="button" onclick="removeAttachment(${post.id},${file.id})">刪除</button>` : ""}</div>`;
+            attachmentList.appendChild(row);
+        });
+    }
+
+    async function removeAttachment(postId,attachmentId) {
+        if (!confirm("確定刪除此附件嗎？")) return;
+        try {
+            const response=await fetch(`/api/posts/${postId}/attachments/${attachmentId}`,{method:"DELETE"});
+            const result=await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "附件刪除失敗");
+            showMessage(result.message); await loadPosts(); selectPost(postId);
+        } catch(error) { showMessage(error.message,false); }
+    }
+
+    async function savePost() {
+        const title=postTitle.value.trim(), content=postContent.value.trim();
+        if (!title) { showMessage("請輸入標題",false); postTitle.focus(); return; }
+        if (!content) { showMessage("請輸入內容",false); postContent.focus(); return; }
+        if (selectedPostId) { const p=posts.find(x=>Number(x.id)===Number(selectedPostId)); if (!p || !userCanEdit(p)) { showMessage("你沒有修改這則資訊的權限",false); return; } }
+        const fd=new FormData();
+        fd.append("title",title); fd.append("content",content); fd.append("category",postCategory.value); fd.append("is_ai_priority",priorityCheckbox.checked ? "true":"false");
+        for (const f of postAttachments.files) fd.append("attachments",f);
+        try {
+            const response=await fetch(selectedPostId ? `/api/posts/${selectedPostId}` : "/api/posts",{method:selectedPostId ? "PUT":"POST",body:fd});
+            const result=await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || "儲存失敗");
+            showMessage(result.message || "資訊已儲存"); selectedPostId=result.data.id; postAttachments.value=""; document.getElementById("selectedFilesText").textContent=""; await loadPosts(); selectPost(selectedPostId);
+        } catch(error) { showMessage(error.message,false); }
+    }
+
+    async function deletePost() {
+
+        if (!selectedPostId) {
+            return;
+        }
+
+        const currentPost =
+            posts.find(
+                post =>
+                    Number(post.id) ===
+                    Number(
+                        selectedPostId
+                    )
+            );
+
+        if (
+            !currentPost ||
+            !userCanEdit(
+                currentPost
+            )
+        ) {
+
+            showMessage(
+                "你沒有刪除權限",
+                false
+            );
+
+            return;
+        }
+
+        const confirmed =
+            confirm(
+                "確定要刪除此資訊嗎？\n\n" +
+                "刪除後無法復原。"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/posts/${selectedPostId}`,
+                    {
+                        method:
+                            "DELETE"
+                    }
+                );
+
+            const result =
+                await response.json();
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+                throw new Error(
+                    result.message ||
+                    "刪除失敗"
+                );
+            }
+
+            showMessage(
+                result.message ||
+                "資訊已刪除"
+            );
+
+            selectedPostId =
+                null;
+
+            newPost();
+
+            await loadPosts();
+
+        } catch (error) {
+
+            showMessage(
+                error.message,
+                false
+            );
+        }
+    }
+
+
+    let searchTimer = null;
+
+
+    searchInput.addEventListener(
+        "input",
+        () => {
+
+            clearTimeout(
+                searchTimer
+            );
+
+            searchTimer =
+                setTimeout(
+                    loadPosts,
+                    300
+                );
+        }
+    );
+
+
+    searchCategory.addEventListener(
+        "change",
+        loadPosts
+    );
+
+
+    document
+        .querySelectorAll(
+            ".category-btn"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    document
+                        .querySelectorAll(
+                            ".category-btn"
+                        )
+                        .forEach(item => {
+                            item
+                                .classList
+                                .remove(
+                                    "active"
+                                );
+                        });
+
+                    button
+                        .classList
+                        .add(
+                            "active"
+                        );
+
+                    searchCategory.value =
+                        button.dataset
+                            .category ||
+                        "";
+
+                    loadPosts();
+                }
+            );
+        });
+
+
+    loadPosts();
+    newPost();
+</script>
+
+{% endblock %}
