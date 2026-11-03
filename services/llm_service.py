@@ -1,6 +1,7 @@
 """Gemini / Ollama generation for Campus AI Hub. Keep API keys server-side."""
 import logging
 import os
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -47,17 +48,44 @@ def _gemini(question, sources):
     try:
         from google import genai
         from google.genai import types
-        client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=30000))
-        response = client.models.generate_content(
-            model=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite").strip(),
-            contents=_prompt(question, sources),
-            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=1200),
-        )
-        return (response.text or "").strip() or None
-    except Exception as exc:
-        # Do not log API responses or credentials; avoid leaking sensitive data.
-        logger.warning("Gemini generation failed (%s)", type(exc).__name__)
+        from google.genai import errors
+    except ImportError:
+        logger.exception("Gemini SDK is not installed")
         return None
+
+    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite").strip()
+    prompt = _prompt(question, sources)
+    # A bounded retry helps transient upstream errors without multiplying traffic indefinitely.
+    retryable_statuses = {429, 500, 502, 503, 504}
+    for attempt in range(1, 4):
+        try:
+            with genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=25000)) as client:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=1200),
+                )
+            result = (response.text or "").strip()
+            if not result:
+                logger.warning("Gemini returned an empty response (model=%s)", model)
+            return result or None
+        except errors.APIError as exc:
+            status = getattr(exc, "code", None)
+            # Do not log the exception message: it can contain request/response data.
+            logger.warning("Gemini API failure: status=%s, type=%s, attempt=%d/3, model=%s",
+                           status, type(exc).__name__, attempt, model)
+            if status not in retryable_statuses or attempt == 3:
+                return None
+        except (TimeoutError, ConnectionError) as exc:
+            logger.warning("Gemini connection failure: type=%s, attempt=%d/3",
+                           type(exc).__name__, attempt)
+            if attempt == 3:
+                return None
+        except Exception as exc:
+            logger.warning("Gemini unexpected failure: type=%s", type(exc).__name__)
+            return None
+        time.sleep(attempt)  # 1s, then 2s; avoid immediate retry bursts.
+    return None
 
 
 def _ollama(question, sources):
