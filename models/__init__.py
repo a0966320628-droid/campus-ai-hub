@@ -27,3 +27,5 @@ __all__ = [
 ]
 
 from .ai import AIDocument, AIDocumentChunk, AIConversation, AIMessage, AIQueryLog
+
+from .avatar import UserAvatar

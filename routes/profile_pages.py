@@ -1,4 +1,8 @@
 import os
+import io
+import logging
+from PIL import Image, ImageOps, UnidentifiedImageError
+from flask import Response, abort
 from werkzeug.utils import secure_filename
 from datetime import datetime
 
@@ -8,13 +12,25 @@ from sqlalchemy import and_, or_
 from extensions import db
 from models import (
     ChatMessage, Community, CommunityMember, Department, Friendship,
-    Meeting, Note, Post, User
+    Meeting, Note, Post, User, UserAvatar
 )
 from services.ai_service import build_ai_summary, generate_ai_answer
 from services.notification_service import get_notification_summary, get_user_chat_room_ids
 from utils.auth_helpers import get_logged_in_user
 
 def register_profile_routes(app):
+    @app.get("/avatars/<int:user_id>")
+    def serve_user_avatar(user_id):
+        # Avatar images are public profile media; no user details are returned.
+        avatar = db.session.get(UserAvatar, user_id)
+        if avatar is None:
+            abort(404)
+        response = Response(avatar.image_data, mimetype=avatar.mime_type)
+        response.headers["Cache-Control"] = "public, max-age=300"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
     # 自己的個人資料頁
     # ========================================================
 
@@ -517,131 +533,32 @@ def register_profile_routes(app):
                 }), 400
 
         # ----------------------------------------------------
-        # 頭像上傳
-        # ----------------------------------------------------
-
-        avatar_file = (
-            request.files.get(
-                "avatar_file"
-            )
-        )
-
-        if (
-            avatar_file
-            and avatar_file.filename
-        ):
-
-            original_filename = (
-                avatar_file
-                .filename
-                .strip()
-            )
-
-            if (
-                "."
-                not in
-                original_filename
-            ):
-
-                return jsonify({
-                    "success": False,
-                    "message":
-                        "頭像檔案缺少副檔名"
-                }), 400
-
-            extension = (
-                original_filename
-                .rsplit(
-                    ".",
-                    1
-                )[-1]
-                .lower()
-            )
-
-            allowed_extensions = {
-                "png",
-                "jpg",
-                "jpeg",
-                "gif",
-                "webp"
-            }
-
-            if (
-                extension
-                not in
-                allowed_extensions
-            ):
-
-                return jsonify({
-                    "success": False,
-                    "message":
-                        "圖片格式只支援 "
-                        "png、jpg、jpeg、gif、webp"
-                }), 400
-
-            secure_filename(
-                original_filename
-            )
-
-            new_filename = (
-                f"user_"
-                f"{current_user.id}"
-                f".{extension}"
-            )
-
-            save_path = (
-                os.path.join(
-                    app.config[
-                        "AVATAR_UPLOAD_FOLDER"
-                    ],
-                    new_filename
-                )
-            )
-
-            # 清除舊頭像
-            for old_extension in (
-                allowed_extensions
-            ):
-
-                old_path = (
-                    os.path.join(
-                        app.config[
-                            "AVATAR_UPLOAD_FOLDER"
-                        ],
-                        f"user_"
-                        f"{current_user.id}"
-                        f".{old_extension}"
-                    )
-                )
-
-                if (
-                    os.path.exists(
-                        old_path
-                    )
-                    and
-                    old_path
-                    != save_path
-                ):
-
-                    try:
-
-                        os.remove(
-                            old_path
-                        )
-
-                    except OSError:
-
-                        pass
-
-            avatar_file.save(
-                save_path
-            )
-
-            current_user.avatar_url = (
-                "/static/uploads/"
-                "avatars/"
-                f"{new_filename}"
-            )
+        # 頭像改為 PostgreSQL 儲存，避免 Render 重啟後遺失。
+        avatar_file = request.files.get("avatar_file")
+        if avatar_file and avatar_file.filename:
+            try:
+                # Pillow 會檢查實際影像內容，不依賴副檔名。
+                raw = avatar_file.stream.read(5 * 1024 * 1024 + 1)
+                if len(raw) > 5 * 1024 * 1024:
+                    return jsonify({"success": False, "message": "頭像不可超過 5 MB"}), 400
+                with Image.open(io.BytesIO(raw)) as original:
+                    if original.width * original.height > 25_000_000:
+                        return jsonify({"success": False, "message": "圖片尺寸過大"}), 400
+                    original.load()
+                    image = ImageOps.exif_transpose(original).convert("RGB")
+                    image.thumbnail((512, 512), Image.Resampling.LANCZOS)
+                    buffer = io.BytesIO()
+                    image.save(buffer, format="JPEG", quality=78, optimize=True)
+                    binary = buffer.getvalue()
+                avatar = db.session.get(UserAvatar, current_user.id)
+                if avatar is None:
+                    avatar = UserAvatar(user_id=current_user.id)
+                    db.session.add(avatar)
+                avatar.image_data = binary
+                avatar.mime_type = "image/jpeg"
+                current_user.avatar_url = url_for("serve_user_avatar", user_id=current_user.id)
+            except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
+                return jsonify({"success": False, "message": "無法讀取圖片，請選擇有效的 PNG/JPG/WebP/GIF"}), 400
 
         # ----------------------------------------------------
         # 寫入資料
