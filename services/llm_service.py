@@ -2,6 +2,7 @@
 import logging
 import os
 import time
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -41,50 +42,69 @@ def _prompt(question, sources):
 
 
 def _gemini(question, sources):
+    """Use primary Gemini first; try a distinct fallback only for transient failures.
+
+    Return None to allow ai_v2_service to use permission-filtered RAG excerpts.
+    Never put API credentials, user text, or source excerpts in logs.
+    """
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         logger.warning("GEMINI_API_KEY is not configured")
         return None
     try:
         from google import genai
-        from google.genai import types
-        from google.genai import errors
+        from google.genai import types, errors
     except ImportError:
-        logger.exception("Gemini SDK is not installed")
+        logger.warning("Gemini SDK is not installed")
         return None
 
-    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite").strip()
+    primary = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite").strip() or "gemini-3.1-flash-lite"
+    fallback = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-2.5-flash").strip()
+    # Only retry temporary upstream failures. Authentication, invalid model,
+    # malformed requests and other permanent errors should not be retried.
+    transient = {429, 500, 502, 503, 504}
     prompt = _prompt(question, sources)
-    # A bounded retry helps transient upstream errors without multiplying traffic indefinitely.
-    retryable_statuses = {429, 500, 502, 503, 504}
-    for attempt in range(1, 4):
-        try:
-            with genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=25000)) as client:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=1200),
-                )
-            result = (response.text or "").strip()
-            if not result:
-                logger.warning("Gemini returned an empty response (model=%s)", model)
-            return result or None
-        except errors.APIError as exc:
-            status = getattr(exc, "code", None)
-            # Do not log the exception message: it can contain request/response data.
-            logger.warning("Gemini API failure: status=%s, type=%s, attempt=%d/3, model=%s",
-                           status, type(exc).__name__, attempt, model)
-            if status not in retryable_statuses or attempt == 3:
+    models = [primary] + ([fallback] if fallback and fallback != primary else [])
+    config = types.GenerateContentConfig(temperature=0.2, max_output_tokens=1200)
+    for model_index, model in enumerate(models):
+        attempts = 2 if model_index == 0 else 1
+        for attempt in range(1, attempts + 1):
+            retryable = False
+            try:
+                with genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=20000)) as client:
+                    response = client.models.generate_content(model=model, contents=prompt, config=config)
+                result = (response.text or "").strip()
+                if result:
+                    if model_index:
+                        logger.info("Gemini fallback model succeeded (model=%s)", model)
+                    return result
+                logger.warning("Gemini empty response (model=%s)", model)
+                # An empty response can be a safety block; don't route to another
+                # model to circumvent a possible safety decision.
                 return None
-        except (TimeoutError, ConnectionError) as exc:
-            logger.warning("Gemini connection failure: type=%s, attempt=%d/3",
-                           type(exc).__name__, attempt)
-            if attempt == 3:
+            except errors.APIError as exc:
+                status = getattr(exc, "code", None)
+                try:
+                    status = int(status)
+                except (TypeError, ValueError):
+                    status = None
+                retryable = status in transient
+                logger.warning("Gemini API failure: status=%s, type=%s, attempt=%d/%d, model=%s",
+                               status, type(exc).__name__, attempt, attempts, model)
+            except (TimeoutError, ConnectionError) as exc:
+                retryable = True
+                logger.warning("Gemini connection failure: type=%s, attempt=%d/%d, model=%s",
+                               type(exc).__name__, attempt, attempts, model)
+            except Exception as exc:
+                logger.warning("Gemini unexpected failure: type=%s, model=%s", type(exc).__name__, model)
                 return None
-        except Exception as exc:
-            logger.warning("Gemini unexpected failure: type=%s", type(exc).__name__)
-            return None
-        time.sleep(attempt)  # 1s, then 2s; avoid immediate retry bursts.
+            if not retryable:
+                return None
+            if attempt < attempts:
+                time.sleep(min(2 ** (attempt - 1), 4) + random.uniform(0, 0.3))
+        if model_index == 0 and len(models) > 1:
+            logger.warning("Gemini primary unavailable; trying fallback model=%s", fallback)
+    logger.warning("Gemini generation unavailable; using retrieval fallback")
     return None
 
 
